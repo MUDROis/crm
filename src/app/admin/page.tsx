@@ -1,8 +1,16 @@
+import Link from 'next/link'
+
 export default function AdminDashboard() {
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold">Панель администратора</h1>
-      <p className="mt-4">Здесь будет полное управление школой.</p>
+      <h1 className="text-3xl font-bold mb-6">Панель администратора</h1>
+      <div className="grid grid-cols-2 gap-4">
+        <Link href="/admin/students" className="p-6 bg-white rounded shadow hover:shadow-md transition">
+          <h2 className="text-xl font-semibold">👩‍🎓 Ученики</h2>
+          <p className="text-gray-600">Управление учениками и группами</p>
+        </Link>
+        {/* Здесь позже добавим другие разделы */}
+      </div>
     </div>
   )
 }

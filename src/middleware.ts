@@ -29,20 +29,21 @@ export async function middleware(request: NextRequest) {
 
   const url = request.nextUrl.clone()
 
+  // Если не вошёл и не на странице входа → отправляем на вход
   if (!user && !url.pathname.startsWith('/login')) {
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
   if (user) {
-    // Используем maybeSingle() вместо single(), чтобы не падать при отсутствии
+    // Пробуем получить роль из базы
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .maybeSingle()
 
-    // ВОЛШЕБНЫЙ ЛОГ: смотрите в терминале VS Code!
+    // Вывод в терминал для диагностики
     console.log('🔍 Middleware profile check:', {
       userId: user.id,
       profile,
@@ -50,8 +51,8 @@ export async function middleware(request: NextRequest) {
     })
 
     if (error) {
-      console.error('❌ Error fetching profile:', error)
-      // Если не можем получить профиль, разлогиниваем
+      console.error('❌ Ошибка при получении профиля:', error)
+      // Если не можем получить профиль – разлогиниваем и показываем ошибку
       const logoutUrl = request.nextUrl.clone()
       logoutUrl.pathname = '/login'
       logoutUrl.searchParams.set('error', 'profile_fetch_error')
@@ -60,11 +61,13 @@ export async function middleware(request: NextRequest) {
       return response
     }
 
+    // Редирект после логина
     if (url.pathname === '/login') {
       url.pathname = profile?.role === 'admin' ? '/admin' : '/teacher'
       return NextResponse.redirect(url)
     }
 
+    // Защита: админ не может в /teacher, учитель – в /admin
     if (url.pathname.startsWith('/admin') && profile?.role !== 'admin') {
       url.pathname = '/teacher'
       return NextResponse.redirect(url)
@@ -79,4 +82,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)']
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+}
