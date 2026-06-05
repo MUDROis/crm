@@ -28,44 +28,31 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const url = request.nextUrl.clone()
-
-  // Не вошёл и не на странице входа → на вход
+  // Если пользователь не залогинился и не на странице входа → на страницу входа
   if (!user && !url.pathname.startsWith('/login')) {
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
   if (user) {
-    // Получаем профиль с защитой от ошибок
-    const { data: profile, error } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .maybeSingle() // не падает, если записи нет
+      .single()
 
-    if (error || !profile) {
-      // Если профиль не найден, разлогиниваем и показываем ошибку
-      const logoutUrl = request.nextUrl.clone()
-      logoutUrl.pathname = '/login'
-      logoutUrl.searchParams.set('error', 'profile_not_found')
-      const response = NextResponse.redirect(logoutUrl)
-      // Удаляем сессию
-      await supabase.auth.signOut()
-      return response
-    }
-
-    // Если зашёл на /login, а уже авторизован → в кабинет
+    // Если залогинился, но зашёл на страницу входа → редирект в его кабинет
     if (url.pathname === '/login') {
-      url.pathname = profile.role === 'admin' ? '/admin' : '/teacher'
+      url.pathname = profile?.role === 'admin' ? '/admin' : '/teacher'
       return NextResponse.redirect(url)
     }
 
-    // Проверка роли
-    if (url.pathname.startsWith('/admin') && profile.role !== 'admin') {
+    // Защита: преподаватель не может попасть в /admin, админ — в /teacher
+    if (url.pathname.startsWith('/admin') && profile?.role !== 'admin') {
       url.pathname = '/teacher'
       return NextResponse.redirect(url)
     }
-    if (url.pathname.startsWith('/teacher') && profile.role === 'admin') {
+    if (url.pathname.startsWith('/teacher') && profile?.role === 'admin') {
       url.pathname = '/admin'
       return NextResponse.redirect(url)
     }
