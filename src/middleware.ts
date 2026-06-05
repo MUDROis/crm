@@ -28,26 +28,43 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const url = request.nextUrl.clone()
-  // Если пользователь не залогинился и не на странице входа → на страницу входа
+
   if (!user && !url.pathname.startsWith('/login')) {
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
   if (user) {
-    const { data: profile } = await supabase
+    // Используем maybeSingle() вместо single(), чтобы не падать при отсутствии
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
-    // Если залогинился, но зашёл на страницу входа → редирект в его кабинет
+    // ВОЛШЕБНЫЙ ЛОГ: смотрите в терминале VS Code!
+    console.log('🔍 Middleware profile check:', {
+      userId: user.id,
+      profile,
+      error: error?.message
+    })
+
+    if (error) {
+      console.error('❌ Error fetching profile:', error)
+      // Если не можем получить профиль, разлогиниваем
+      const logoutUrl = request.nextUrl.clone()
+      logoutUrl.pathname = '/login'
+      logoutUrl.searchParams.set('error', 'profile_fetch_error')
+      const response = NextResponse.redirect(logoutUrl)
+      await supabase.auth.signOut()
+      return response
+    }
+
     if (url.pathname === '/login') {
       url.pathname = profile?.role === 'admin' ? '/admin' : '/teacher'
       return NextResponse.redirect(url)
     }
 
-    // Защита: преподаватель не может попасть в /admin, админ — в /teacher
     if (url.pathname.startsWith('/admin') && profile?.role !== 'admin') {
       url.pathname = '/teacher'
       return NextResponse.redirect(url)
@@ -62,5 +79,4 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
-}
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)']
