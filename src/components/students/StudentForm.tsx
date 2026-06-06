@@ -9,7 +9,7 @@ interface Student {
   phone: string
   email: string
   subject: string
-  teacher_id: string
+  teacher_id: string | null
   type: 'individual' | 'group'
   customer_name: string
   customer_contact: string
@@ -31,19 +31,22 @@ export default function StudentForm({
   onSaved: () => void
   student?: Student | null
 }) {
+    const cleanStudent = student ? {
+    id: student.id,
+    full_name: student.full_name,
+    phone: student.phone,
+    email: student.email,
+    subject: student.subject,
+    teacher_id: student.teacher_id,
+    type: student.type,
+    customer_name: student.customer_name,
+    customer_contact: student.customer_contact,
+    notes: student.notes,
+    online_link: student.online_link,
+  } : null;
+
   const [form, setForm] = useState<Student>(
-    student || {
-      full_name: '',
-      phone: '',
-      email: '',
-      subject: '',
-      teacher_id: '',
-      type: 'individual',
-      customer_name: '',
-      customer_contact: '',
-      notes: '',
-      online_link: '',
-    }
+    cleanStudent || { full_name: '', phone: '', email: '', subject: '', teacher_id: '', type: 'individual', customer_name: '', customer_contact: '', notes: '', online_link: '' }
   )
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [loading, setLoading] = useState(false)
@@ -62,13 +65,16 @@ export default function StudentForm({
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-    const handleSubmit = async (e: React.FormEvent) => {
+      const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     // Убираем пустые строки в uuid-полях, чтобы отправить null
     const dataToSave = { ...form }
     if (dataToSave.teacher_id === '') dataToSave.teacher_id = null
+
+    // Удаляем вложенный объект teacher, если он есть (от JOIN-запроса)
+    delete (dataToSave as any).teacher
 
     if (form.id) {
       const { error } = await supabase.from('students').update(dataToSave).eq('id', form.id)

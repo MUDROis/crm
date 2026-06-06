@@ -9,7 +9,10 @@ export default function AdminDashboard() {
           <h2 className="text-xl font-semibold">👩‍🎓 Ученики</h2>
           <p className="text-gray-600">Управление учениками и группами</p>
         </Link>
-        {/* Здесь позже добавим другие разделы */}
+        <Link href="/admin/groups" className="p-6 bg-white rounded shadow hover:shadow-md transition">
+          <h2 className="text-xl font-semibold">👥 Группы</h2>
+          <p className="text-gray-600">Управление группами и составом</p>
+        </Link>
       </div>
     </div>
   )

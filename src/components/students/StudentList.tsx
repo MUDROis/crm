@@ -12,7 +12,7 @@ interface Student {
   teacher_id: string
   type: string
   customer_name: string
-  profiles: { full_name: string } | null
+  teacher: { full_name: string } | null
 }
 
 export default function StudentList({ onEdit }: { onEdit: (student: any) => void }) {
@@ -30,7 +30,7 @@ export default function StudentList({ onEdit }: { onEdit: (student: any) => void
   }, [])
 
   async function loadStudents() {
-    let query = supabase.from('students').select('*, profiles!students_teacher_id_fkey(full_name)')
+    let query = supabase.from('students').select('*, teacher:profiles!teacher_id(full_name)')
     if (search) query = query.ilike('full_name', `%${search}%`)
     if (filterTeacher) query = query.eq('teacher_id', filterTeacher)
     if (filterSubject) query = query.ilike('subject', `%${filterSubject}%`)
@@ -96,7 +96,7 @@ export default function StudentList({ onEdit }: { onEdit: (student: any) => void
               <tr key={s.id}>
                 <td className="border p-2">{s.full_name}</td>
                 <td className="border p-2">{s.subject}</td>
-                <td className="border p-2">{s.profiles?.full_name || '-'}</td>
+                <td className="border p-2">{s.teacher?.full_name || '-'}</td>
                 <td className="border p-2">{s.type === 'individual' ? 'Инд.' : 'Групп.'}</td>
                 <td className="border p-2">{s.customer_name}</td>
                 <td className="border p-2 space-x-2">
