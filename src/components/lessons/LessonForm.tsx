@@ -23,7 +23,7 @@ interface Lesson {
   type: 'individual' | 'group'
   student_id?: string | null
   group_id?: string | null
-  teacher_id: string
+  teacher_id: string | null
   online_link: string
   comment: string
   status: string
@@ -49,11 +49,11 @@ export default function LessonForm({
   onPostpone?: (data: Lesson) => void
   prefillData?: Lesson | null
 }) {
-  const initialData = prefillData || lesson || {
+  const initialData: Lesson = prefillData || lesson || {
     lesson_date: new Date().toISOString().split('T')[0],
     start_time: '09:00',
     end_time: '10:00',
-    type: 'individual' as const,
+    type: 'individual',
     student_id: null,
     group_id: null,
     teacher_id: '',
@@ -167,13 +167,11 @@ export default function LessonForm({
     onSaved()
   }
 
-  // Безопасное удаление с очисткой ссылок
   const handleDelete = async () => {
     if (!form.id) return
     if (!confirm('Удалить урок навсегда? Это действие нельзя отменить.')) return
     setLoading(true)
 
-    // Сначала убираем ссылки у уроков, которые ссылаются на удаляемый
     const { error: updateError } = await supabase
       .from('lessons')
       .update({ original_lesson_id: null })
@@ -185,7 +183,6 @@ export default function LessonForm({
       return
     }
 
-    // Удаляем сам урок
     const { error } = await supabase.from('lessons').delete().eq('id', form.id)
     if (error) {
       alert('Ошибка при удалении: ' + error.message)
@@ -196,7 +193,6 @@ export default function LessonForm({
     }
   }
 
-  // Перенос урока
   const handlePostpone = async () => {
     if (!form.id) return
     setLoading(true)

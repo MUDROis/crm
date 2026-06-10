@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import LessonForm from '@/components/lessons/LessonForm'
 
-interface Lesson {
+// Интерфейс для урока из БД (с расширенными полями)
+interface CalendarLesson {
   id: string
   lesson_date: string
   start_time: string
@@ -23,14 +24,14 @@ interface Lesson {
 }
 
 export default function LessonCalendar({ role }: { role: string }) {
-  const [lessons, setLessons] = useState<Lesson[]>([])
+  const [lessons, setLessons] = useState<CalendarLesson[]>([])
   const [weekStart, setWeekStart] = useState(getMonday(new Date()))
   const [loading, setLoading] = useState(true)
-  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null)
+  const [editingLesson, setEditingLesson] = useState<CalendarLesson | null>(null)
   const [showCommentModal, setShowCommentModal] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [showEditForm, setShowEditForm] = useState(false)
-  const [postponePrefill, setPostponePrefill] = useState<Lesson | null>(null)
+  const [postponePrefill, setPostponePrefill] = useState<any>(null) // Данные для формы переноса (тип Lesson из формы)
   const [showPostponeForm, setShowPostponeForm] = useState(false)
   const supabase = createClient()
 
@@ -69,7 +70,6 @@ export default function LessonCalendar({ role }: { role: string }) {
   async function deleteLesson(lessonId: string) {
     if (!confirm('Удалить урок навсегда? Это действие нельзя отменить.')) return
 
-    // Сначала убираем ссылки у уроков, которые ссылаются на удаляемый
     const { error: updateError } = await supabase
       .from('lessons')
       .update({ original_lesson_id: null })
@@ -80,7 +80,6 @@ export default function LessonCalendar({ role }: { role: string }) {
       return
     }
 
-    // Теперь удаляем сам урок
     const { error } = await supabase.from('lessons').delete().eq('id', lessonId)
     if (error) {
       alert('Ошибка при удалении: ' + error.message)
@@ -89,7 +88,7 @@ export default function LessonCalendar({ role }: { role: string }) {
     }
   }
 
-  function openComment(lesson: Lesson) {
+  function openComment(lesson: CalendarLesson) {
     setEditingLesson(lesson)
     setCommentText(lesson.comment || '')
     setShowCommentModal(true)
@@ -103,7 +102,7 @@ export default function LessonCalendar({ role }: { role: string }) {
     }
   }
 
-  function openEditForm(lesson: Lesson) {
+  function openEditForm(lesson: CalendarLesson) {
     setEditingLesson(lesson)
     setShowEditForm(true)
   }
@@ -114,7 +113,8 @@ export default function LessonCalendar({ role }: { role: string }) {
     setWeekStart(getMonday(newStart))
   }
 
-  const handlePostponeFromEdit = (lessonData: Lesson) => {
+  const handlePostponeFromEdit = (lessonData: any) => {
+    // lessonData – объект из формы (Lesson)
     supabase.from('lessons').update({ status: 'postponed' }).eq('id', lessonData.id!).then(() => {
       const newDate = new Date(lessonData.lesson_date)
       newDate.setDate(newDate.getDate() + 7)
@@ -137,7 +137,7 @@ export default function LessonCalendar({ role }: { role: string }) {
   }
 
   const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-  const lessonsByDay: { [key: string]: Lesson[] } = {}
+  const lessonsByDay: { [key: string]: CalendarLesson[] } = {}
   for (let i = 0; i < 7; i++) {
     const date = new Date(weekStart)
     date.setDate(date.getDate() + i)
