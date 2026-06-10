@@ -34,6 +34,14 @@ interface Teacher {
   full_name: string
 }
 
+// Вспомогательная функция: добавляет минуты к времени в формате HH:MM
+function addMinutes(time: string, minutes: number): string {
+  const [h, m] = time.split(':').map(Number)
+  const date = new Date()
+  date.setHours(h, m + minutes, 0, 0)
+  return date.toTimeString().slice(0, 5)
+}
+
 export default function LessonForm({
   onClose,
   onSaved,
@@ -49,10 +57,13 @@ export default function LessonForm({
   onPostpone?: (data: Lesson) => void
   prefillData?: Lesson | null
 }) {
+  // Инициализация формы: при новом уроке автоматически ставим конец = начало + 50 мин
+  const getDefaultEnd = (start: string) => addMinutes(start, 50)
+
   const initialData: Lesson = prefillData || lesson || {
     lesson_date: new Date().toISOString().split('T')[0],
     start_time: '09:00',
-    end_time: '10:00',
+    end_time: getDefaultEnd('09:00'), // 09:50
     type: 'individual',
     student_id: null,
     group_id: null,
@@ -100,7 +111,14 @@ export default function LessonForm({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
+    setForm((prev) => {
+      const updated = { ...prev, [name]: value }
+      // Если изменили время начала — автоматически сдвигаем время окончания на 50 минут
+      if (name === 'start_time') {
+        updated.end_time = addMinutes(value, 50)
+      }
+      return updated
+    })
   }
 
   const handleTypeChange = (type: 'individual' | 'group') => {
@@ -130,6 +148,31 @@ export default function LessonForm({
     }
   }
 
+  // Проверка конфликтов: возвращает массив конфликтующих уроков
+  async function getConflicts(teacherId: string, date: string, start: string, end: string, excludeId?: string) {
+    // Находим уроки того же преподавателя в ту же дату
+    let query = supabase
+      .from('lessons')
+      .select('id, start_time, end_time, type, student:students!student_id(full_name), group:groups!group_id(name)')
+      .eq('teacher_id', teacherId)
+      .eq('lesson_date', date)
+
+    if (excludeId) {
+      query = query.neq('id', excludeId)
+    }
+
+    const { data: existingLessons, error } = await query
+    if (error || !existingLessons) return []
+
+    // Фильтруем пересекающиеся по времени
+    return existingLessons.filter((l: any) => {
+      const existStart = l.start_time
+      const existEnd = l.end_time || addMinutes(l.start_time, 50) // если нет конца, считаем 50 мин
+      // Пересечение: начало нового < конец существующего И конец нового > начало существующего
+      return start < existEnd && end > existStart
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -144,6 +187,36 @@ export default function LessonForm({
       if (user) dataToSave.teacher_id = user.id
     }
 
+    // Проверка конфликтов, только если указан преподаватель и время
+    if (dataToSave.teacher_id && dataToSave.start_time && dataToSave.end_time) {
+      const conflicts = await getConflicts(
+        dataToSave.teacher_id,
+        dataToSave.lesson_date,
+        dataToSave.start_time,
+        dataToSave.end_time,
+        form.id // исключаем текущий урок при редактировании
+      )
+
+      if (conflicts.length > 0) {
+        const conflictDetails = conflicts.map((c: any) => {
+          const name = c.student?.full_name || c.group?.name || '—'
+          return `- ${c.start_time?.slice(0, 5)}–${c.end_time?.slice(0, 5)}, ${c.type === 'individual' ? 'ученик' : 'группа'} ${name}`
+        }).join('\n')
+
+        const proceed = confirm(
+          `⚠️ Обнаружены конфликты у этого преподавателя на ${dataToSave.lesson_date}:\n\n` +
+          conflictDetails +
+          `\n\nВсё равно сохранить урок?`
+        )
+
+        if (!proceed) {
+          setLoading(false)
+          return // отмена сохранения
+        }
+      }
+    }
+
+    // Сохранение (повторяющиеся или одиночный урок)
     if (repeat && !form.id && !prefillData) {
       const startDate = new Date(dataToSave.lesson_date)
       for (let i = 0; i < repeatWeeks; i++) {
@@ -167,6 +240,7 @@ export default function LessonForm({
     onSaved()
   }
 
+  // Безопасное удаление
   const handleDelete = async () => {
     if (!form.id) return
     if (!confirm('Удалить урок навсегда? Это действие нельзя отменить.')) return
@@ -193,6 +267,7 @@ export default function LessonForm({
     }
   }
 
+  // Перенос урока
   const handlePostpone = async () => {
     if (!form.id) return
     setLoading(true)
