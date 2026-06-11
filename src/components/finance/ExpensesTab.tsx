@@ -22,16 +22,28 @@ export default function ExpensesTab() {
     category: '',
     description: '',
   })
+  const [categories, setCategories] = useState<string[]>([])
+  const [showNewCategory, setShowNewCategory] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
   const supabase = createClient()
 
   useEffect(() => {
     loadExpenses()
+    loadCategories()
   }, [])
 
   async function loadExpenses() {
     const { data, error } = await supabase.from('expenses').select('*').order('expense_date', { ascending: false })
     if (!error && data) setExpenses(data)
     setLoading(false)
+  }
+
+  async function loadCategories() {
+    const { data, error } = await supabase.from('expenses').select('category')
+    if (!error && data) {
+      const unique = [...new Set(data.map((e: any) => e.category).filter(Boolean))]
+      setCategories(unique.sort())
+    }
   }
 
   const handleAdd = () => {
@@ -65,6 +77,7 @@ export default function ExpensesTab() {
       else {
         setShowForm(false)
         loadExpenses()
+        loadCategories()
       }
     } else {
       const { error } = await supabase.from('expenses').insert(payload)
@@ -72,6 +85,7 @@ export default function ExpensesTab() {
       else {
         setShowForm(false)
         loadExpenses()
+        loadCategories()
       }
     }
   }
@@ -80,6 +94,16 @@ export default function ExpensesTab() {
     if (confirm('Удалить расход?')) {
       await supabase.from('expenses').delete().eq('id', id)
       loadExpenses()
+      loadCategories()
+    }
+  }
+
+  const handleAddNewCategory = () => {
+    if (newCategoryName.trim()) {
+      setCategories(prev => [...prev, newCategoryName.trim()].sort())
+      setForm(prev => ({ ...prev, category: newCategoryName.trim() }))
+      setNewCategoryName('')
+      setShowNewCategory(false)
     }
   }
 
@@ -116,6 +140,7 @@ export default function ExpensesTab() {
           </tbody>
         </table>
       )}
+
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-md">
@@ -131,8 +156,39 @@ export default function ExpensesTab() {
               </div>
               <div>
                 <label className="block text-sm">Категория</label>
-                <input type="text" value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} className="w-full border p-2 rounded" />
+                <div className="flex gap-2">
+                  <select
+                    value={form.category}
+                    onChange={(e) => {
+                      if (e.target.value === '__new__') {
+                        setShowNewCategory(true)
+                      } else {
+                        setForm({...form, category: e.target.value})
+                      }
+                    }}
+                    className="flex-1 border p-2 rounded"
+                  >
+                    <option value="">Без категории</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                    <option value="__new__">+ Добавить новую...</option>
+                  </select>
+                </div>
               </div>
+              {showNewCategory && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="Название категории"
+                    className="flex-1 border p-2 rounded"
+                    autoFocus
+                  />
+                  <button type="button" onClick={handleAddNewCategory} className="bg-blue-600 text-white px-3 py-2 rounded">OK</button>
+                </div>
+              )}
               <div>
                 <label className="block text-sm">Описание</label>
                 <input type="text" value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} className="w-full border p-2 rounded" />

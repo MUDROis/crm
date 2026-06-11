@@ -28,13 +28,20 @@ export default function PaymentsTab() {
     subscription_id: '',
   })
   const [students, setStudents] = useState<any[]>([])
-  const [subscriptions, setSubscriptions] = useState<any[]>([])
+  const [subscriptions, setSubscriptions] = useState<any[]>([]) // все абонементы
+  const [studentSubscriptions, setStudentSubscriptions] = useState<any[]>([]) // абонементы выбранного ученика
+  const [showNewSubscription, setShowNewSubscription] = useState(false)
+  const [newSubForm, setNewSubForm] = useState({
+    total_lessons: '',
+    remaining_lessons: '',
+    valid_until: '',
+  })
   const supabase = createClient()
 
   useEffect(() => {
     loadPayments()
     loadStudents()
-    loadSubscriptions()
+    loadAllSubscriptions()
   }, [])
 
   async function loadPayments() {
@@ -51,10 +58,27 @@ export default function PaymentsTab() {
     if (data) setStudents(data)
   }
 
-  async function loadSubscriptions() {
-    const { data } = await supabase.from('subscriptions').select('id, student_id, students(full_name)').order('created_at', { ascending: false })
+  async function loadAllSubscriptions() {
+    const { data } = await supabase
+      .from('subscriptions')
+      .select('id, student_id, total_lessons, remaining_lessons, valid_until, students(full_name)')
+      .order('created_at', { ascending: false })
     if (data) setSubscriptions(data)
   }
+
+  // При изменении ученика или типа – фильтруем абонементы
+  useEffect(() => {
+    if (form.type === 'subscription' && form.student_id) {
+      const filtered = subscriptions.filter(s => s.student_id === form.student_id)
+      setStudentSubscriptions(filtered)
+      // Если текущий выбранный абонемент не принадлежит этому ученику – сбрасываем
+      if (form.subscription_id && !filtered.find(s => s.id === form.subscription_id)) {
+        setForm(f => ({ ...f, subscription_id: '' }))
+      }
+    } else {
+      setStudentSubscriptions([])
+    }
+  }, [form.student_id, form.type, subscriptions])
 
   const handleAdd = () => {
     setEditingPayment(null)
@@ -117,6 +141,27 @@ export default function PaymentsTab() {
     }
   }
 
+  // Создание нового абонемента
+  const handleCreateSubscription = async () => {
+    if (!form.student_id) {
+      alert('Сначала выберите ученика')
+      return
+    }
+    const { error } = await supabase.from('subscriptions').insert({
+      student_id: form.student_id,
+      total_lessons: parseInt(newSubForm.total_lessons) || 0,
+      remaining_lessons: parseInt(newSubForm.remaining_lessons) || 0,
+      valid_until: newSubForm.valid_until || null,
+    })
+    if (error) alert(error.message)
+    else {
+      setShowNewSubscription(false)
+      setNewSubForm({ total_lessons: '', remaining_lessons: '', valid_until: '' })
+      // Перезагружаем список абонементов
+      await loadAllSubscriptions()
+    }
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -152,6 +197,8 @@ export default function PaymentsTab() {
           </tbody>
         </table>
       )}
+
+      {/* Модальное окно платежа */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-md">
@@ -182,12 +229,30 @@ export default function PaymentsTab() {
               {form.type === 'subscription' && (
                 <div>
                   <label className="block text-sm">Абонемент</label>
-                  <select value={form.subscription_id} onChange={(e) => setForm({...form, subscription_id: e.target.value})} className="w-full border p-2 rounded">
-                    <option value="">Выберите...</option>
-                    {subscriptions.filter(s => s.student_id === form.student_id).map(s => (
-                      <option key={s.id} value={s.id}>Абонемент #{s.id?.slice(0,8)} ({s.students?.full_name})</option>
-                    ))}
-                  </select>
+                  <div className="flex gap-2">
+                    <select
+                      value={form.subscription_id}
+                      onChange={(e) => setForm({...form, subscription_id: e.target.value})}
+                      className="flex-1 border p-2 rounded"
+                    >
+                      <option value="">Выберите...</option>
+                      {studentSubscriptions.map(s => (
+                        <option key={s.id} value={s.id}>
+                          Абонемент #{s.id?.slice(0,8)} ({s.total_lessons} занятий, осталось {s.remaining_lessons})
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewSubForm({ total_lessons: '', remaining_lessons: '', valid_until: '' })
+                        setShowNewSubscription(true)
+                      }}
+                      className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-sm"
+                    >
+                      + Новый
+                    </button>
+                  </div>
                 </div>
               )}
               <div>
@@ -199,6 +264,48 @@ export default function PaymentsTab() {
                 <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Сохранить</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно быстрого создания абонемента */}
+      {showNewSubscription && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-sm">
+            <h3 className="text-lg font-bold mb-4">Новый абонемент для {students.find(s => s.id === form.student_id)?.full_name}</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm">Всего занятий</label>
+                <input
+                  type="number"
+                  value={newSubForm.total_lessons}
+                  onChange={(e) => setNewSubForm({...newSubForm, total_lessons: e.target.value})}
+                  className="w-full border p-2 rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm">Осталось занятий</label>
+                <input
+                  type="number"
+                  value={newSubForm.remaining_lessons}
+                  onChange={(e) => setNewSubForm({...newSubForm, remaining_lessons: e.target.value})}
+                  className="w-full border p-2 rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm">Действует до</label>
+                <input
+                  type="date"
+                  value={newSubForm.valid_until}
+                  onChange={(e) => setNewSubForm({...newSubForm, valid_until: e.target.value})}
+                  className="w-full border p-2 rounded"
+                />
+              </div>
+              <div className="flex justify-end space-x-3 pt-4">
+                <button onClick={() => setShowNewSubscription(false)} className="px-4 py-2 border rounded">Отмена</button>
+                <button onClick={handleCreateSubscription} className="px-4 py-2 bg-blue-600 text-white rounded">Создать</button>
+              </div>
+            </div>
           </div>
         </div>
       )}
