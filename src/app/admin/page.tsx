@@ -21,6 +21,10 @@ export default function AdminDashboard() {
           <h2 className="text-xl font-semibold">📊 Отчёты</h2>
           <p className="text-gray-600">Отчёты по ученикам и группам</p>
         </Link>
+        <Link href="/admin/finance" className="p-6 bg-white rounded shadow hover:shadow-md transition">
+          <h2 className="text-xl font-semibold">💰 Финансы</h2>
+          <p className="text-gray-600">Платежи, абонементы, расходы, зарплаты</p>
+        </Link>
       </div>
     </div>
   )
