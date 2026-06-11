@@ -33,6 +33,10 @@ export default function AdminDashboard() {
           <h2 className="text-xl font-semibold">💾 Резервное копирование</h2>
           <p className="text-gray-600">Полная копия данных, экспорт в Excel</p>
         </Link>
+        <Link href="/admin/teachers" className="p-6 bg-white rounded shadow hover:shadow-md transition">
+          <h2 className="text-xl font-semibold">👨‍🏫 Преподаватели</h2>2
+          <p className="text-gray-600">Управление аккаунтами преподавателей</p>
+    </Link>
       </div>
     </div>
   )
