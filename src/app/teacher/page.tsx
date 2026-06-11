@@ -9,6 +9,10 @@ export default function TeacherDashboard() {
           <h2 className="text-xl font-semibold">📅 Мои уроки</h2>
           <p className="text-gray-600">Расписание, статусы, комментарии</p>
         </Link>
+        <Link href="/teacher/tasks" className="p-6 bg-white rounded shadow hover:shadow-md transition">
+          <h2 className="text-xl font-semibold">📋 Мои задачи</h2>
+          <p className="text-gray-600">Список задач от администратора</p>
+        </Link>
       </div>
     </div>
   )

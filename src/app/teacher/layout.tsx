@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import TeacherNavbar from '@/components/TeacherNavbar'
 
 export default async function TeacherLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -9,5 +10,10 @@ export default async function TeacherLayout({ children }: { children: React.Reac
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'teacher') redirect('/admin')
 
-  return <div>{children}</div>
+  return (
+    <div>
+      <TeacherNavbar />
+      <div>{children}</div>
+    </div>
+  )
 }
