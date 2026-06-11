@@ -1,0 +1,258 @@
+{
+  "profiles": [
+    {
+      "id": "85174fc6-3ccf-4e62-bf12-7577c495047b",
+      "email": "interactive.school@yandex.ru",
+      "full_name": "Анна Александровна",
+      "role": "teacher",
+      "created_at": "2026-06-06T23:01:47.127366+00:00"
+    },
+    {
+      "id": "ac406626-08d1-4f1d-881a-58874e474361",
+      "email": "mudro.is@yandex.ru",
+      "full_name": "Анна",
+      "role": "admin",
+      "created_at": "2026-06-05T21:41:16.788255+00:00"
+    }
+  ],
+  "students": [
+    {
+      "id": "609641a2-7117-4304-8d69-5569ffdb63d2",
+      "full_name": "Вася",
+      "phone": "444444",
+      "email": "",
+      "subject": "англ",
+      "teacher_id": "85174fc6-3ccf-4e62-bf12-7577c495047b",
+      "type": "group",
+      "customer_name": "",
+      "customer_contact": "",
+      "notes": "",
+      "online_link": "",
+      "created_at": "2026-06-05T23:44:00.143951+00:00"
+    },
+    {
+      "id": "805c1314-d74c-46ff-bb3d-92647515b9bf",
+      "full_name": "Федя",
+      "phone": "777777777777",
+      "email": "",
+      "subject": "англ",
+      "teacher_id": "85174fc6-3ccf-4e62-bf12-7577c495047b",
+      "type": "group",
+      "customer_name": "",
+      "customer_contact": "",
+      "notes": "",
+      "online_link": "",
+      "created_at": "2026-06-05T23:30:29.359659+00:00"
+    }
+  ],
+  "groups": [
+    {
+      "id": "d6032ba1-75b7-408f-8ec0-071f468111bd",
+      "name": "Англ В1",
+      "subject": "англ",
+      "teacher_id": null,
+      "online_link": "mjm",
+      "created_at": "2026-06-05T23:46:04.073242+00:00"
+    },
+    {
+      "id": "ff307204-71ff-4cc8-a95e-78a624bb4316",
+      "name": "Englis",
+      "subject": "фр",
+      "teacher_id": null,
+      "online_link": "",
+      "created_at": "2026-06-05T23:53:19.933514+00:00"
+    }
+  ],
+  "group_students": [
+    {
+      "group_id": "ff307204-71ff-4cc8-a95e-78a624bb4316",
+      "student_id": "805c1314-d74c-46ff-bb3d-92647515b9bf"
+    },
+    {
+      "group_id": "d6032ba1-75b7-408f-8ec0-071f468111bd",
+      "student_id": "805c1314-d74c-46ff-bb3d-92647515b9bf"
+    },
+    {
+      "group_id": "d6032ba1-75b7-408f-8ec0-071f468111bd",
+      "student_id": "609641a2-7117-4304-8d69-5569ffdb63d2"
+    }
+  ],
+  "lessons": [
+    {
+      "id": "20eaf30b-d0aa-4149-ac91-1fa6eb75212d",
+      "lesson_date": "2026-06-12",
+      "start_time": "09:00:00",
+      "end_time": "09:50:00",
+      "type": "individual",
+      "status": "completed",
+      "student_id": "805c1314-d74c-46ff-bb3d-92647515b9bf",
+      "group_id": null,
+      "teacher_id": "85174fc6-3ccf-4e62-bf12-7577c495047b",
+      "online_link": "",
+      "comment": "",
+      "original_lesson_id": null,
+      "created_at": "2026-06-11T01:18:35.106975+00:00"
+    },
+    {
+      "id": "bb0a79e8-d2dc-4d0e-8277-4424e53ff12a",
+      "lesson_date": "2026-06-10",
+      "start_time": "09:00:00",
+      "end_time": "10:00:00",
+      "type": "individual",
+      "status": "completed",
+      "student_id": "609641a2-7117-4304-8d69-5569ffdb63d2",
+      "group_id": null,
+      "teacher_id": "85174fc6-3ccf-4e62-bf12-7577c495047b",
+      "online_link": "",
+      "comment": "",
+      "original_lesson_id": null,
+      "created_at": "2026-06-10T22:45:48.241636+00:00"
+    },
+    {
+      "id": "69052132-e3df-4853-bac9-9911e04abde7",
+      "lesson_date": "2026-06-10",
+      "start_time": "09:00:00",
+      "end_time": "10:00:00",
+      "type": "individual",
+      "status": "planned",
+      "student_id": "609641a2-7117-4304-8d69-5569ffdb63d2",
+      "group_id": null,
+      "teacher_id": "85174fc6-3ccf-4e62-bf12-7577c495047b",
+      "online_link": "",
+      "comment": "",
+      "original_lesson_id": null,
+      "created_at": "2026-06-10T22:47:54.374739+00:00"
+    },
+    {
+      "id": "e0c902e9-f3af-4a26-a915-c87497ffaa5e",
+      "lesson_date": "2026-06-10",
+      "start_time": "09:00:00",
+      "end_time": "10:00:00",
+      "type": "individual",
+      "status": "completed",
+      "student_id": "609641a2-7117-4304-8d69-5569ffdb63d2",
+      "group_id": null,
+      "teacher_id": "85174fc6-3ccf-4e62-bf12-7577c495047b",
+      "online_link": "",
+      "comment": "",
+      "original_lesson_id": null,
+      "created_at": "2026-06-10T22:53:15.578207+00:00"
+    },
+    {
+      "id": "282a360d-2029-4cfe-a5cf-93c9cdb7229c",
+      "lesson_date": "2026-06-17",
+      "start_time": "09:00:00",
+      "end_time": "10:00:00",
+      "type": "individual",
+      "status": "completed",
+      "student_id": "609641a2-7117-4304-8d69-5569ffdb63d2",
+      "group_id": null,
+      "teacher_id": "85174fc6-3ccf-4e62-bf12-7577c495047b",
+      "online_link": "",
+      "comment": "",
+      "original_lesson_id": null,
+      "created_at": "2026-06-10T22:53:15.705904+00:00"
+    }
+  ],
+  "subscriptions": [
+    {
+      "id": "66aa3d55-243d-4d58-ae01-6d5915a716a9",
+      "student_id": "609641a2-7117-4304-8d69-5569ffdb63d2",
+      "total_lessons": 8,
+      "remaining_lessons": 0,
+      "valid_until": "2026-06-30",
+      "created_at": "2026-06-10T23:38:11.348626+00:00"
+    },
+    {
+      "id": "e53bb1d8-f530-4c37-9afe-a67b7abb0047",
+      "student_id": "805c1314-d74c-46ff-bb3d-92647515b9bf",
+      "total_lessons": 8,
+      "remaining_lessons": 7,
+      "valid_until": "2026-07-31",
+      "created_at": "2026-06-11T00:20:56.528278+00:00"
+    }
+  ],
+  "payments": [
+    {
+      "id": "e5930c5c-738c-46a0-8abf-acb6b3038a5e",
+      "student_id": "609641a2-7117-4304-8d69-5569ffdb63d2",
+      "amount": 8000,
+      "payment_date": "2026-06-10",
+      "description": "8 занятий",
+      "type": "subscription",
+      "subscription_id": "66aa3d55-243d-4d58-ae01-6d5915a716a9",
+      "created_at": "2026-06-10T23:39:10.817622+00:00"
+    },
+    {
+      "id": "e42fd584-57d1-4d3a-8103-8a2e7c443d06",
+      "student_id": "805c1314-d74c-46ff-bb3d-92647515b9bf",
+      "amount": 6000,
+      "payment_date": "2026-06-11",
+      "description": "",
+      "type": "subscription",
+      "subscription_id": null,
+      "created_at": "2026-06-11T00:19:14.73343+00:00"
+    },
+    {
+      "id": "ad4f79a0-1d7d-4f4d-a043-ce5aad718f1c",
+      "student_id": "805c1314-d74c-46ff-bb3d-92647515b9bf",
+      "amount": 6000,
+      "payment_date": "2026-06-11",
+      "description": "",
+      "type": "subscription",
+      "subscription_id": null,
+      "created_at": "2026-06-11T00:20:04.356629+00:00"
+    },
+    {
+      "id": "377c9463-1bb9-4d15-bf2d-6d0aa3b25c4a",
+      "student_id": "805c1314-d74c-46ff-bb3d-92647515b9bf",
+      "amount": 6000,
+      "payment_date": "2026-06-11",
+      "description": "",
+      "type": "subscription",
+      "subscription_id": null,
+      "created_at": "2026-06-11T00:20:04.356629+00:00"
+    }
+  ],
+  "expenses": [
+    {
+      "id": "aa8c145b-3bdb-41f4-b5a8-17869674d4f2",
+      "amount": 40000,
+      "expense_date": "2026-06-10",
+      "category": "Аренда",
+      "description": "",
+      "created_at": "2026-06-10T23:39:51.306121+00:00"
+    },
+    {
+      "id": "3d05e618-7597-4542-8624-deea67089cd5",
+      "amount": 265,
+      "expense_date": "2026-06-11",
+      "category": "Еда",
+      "description": "",
+      "created_at": "2026-06-11T00:33:59.321133+00:00"
+    }
+  ],
+  "salaries": [
+    {
+      "id": "6b5f9554-8419-4de2-8e79-4b183ed739c3",
+      "teacher_id": "85174fc6-3ccf-4e62-bf12-7577c495047b",
+      "amount": 30000,
+      "period_start": "2026-06-01",
+      "period_end": "2026-06-14",
+      "paid": true,
+      "created_at": "2026-06-10T23:41:24.364517+00:00"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "fa926d3a-5a0e-49f0-812b-da7a95d0ef66",
+      "assigned_to": "85174fc6-3ccf-4e62-bf12-7577c495047b",
+      "created_by": "ac406626-08d1-4f1d-881a-58874e474361",
+      "title": "перевод",
+      "description": "Выполнить перевод справки на английский",
+      "completed": false,
+      "due_date": "2026-06-14",
+      "created_at": "2026-06-11T19:08:01.141695+00:00"
+    }
+  ]
+}
