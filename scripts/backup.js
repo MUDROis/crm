@@ -6,21 +6,25 @@ const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-console.log('Проверка переменных окружения...');
+console.log('=== Проверка переменных окружения ===');
+console.log(`SUPABASE_URL: ${supabaseUrl}`);
 if (!supabaseUrl) {
-  console.error('❌ SUPABASE_URL не задан. Проверьте секреты GitHub.');
+  console.error('❌ SUPABASE_URL не задан');
   process.exit(1);
 }
 if (!supabaseKey) {
-  console.error('❌ SUPABASE_SERVICE_ROLE_KEY не задан. Проверьте секреты GitHub.');
+  console.error('❌ SUPABASE_SERVICE_ROLE_KEY не задан');
   process.exit(1);
 }
 
-console.log(`SUPABASE_URL: ${supabaseUrl}`);
-console.log(`Ключ: ${supabaseKey.substring(0, 10)}...`);
+// Очищаем возможные пробелы и кавычки
+const cleanUrl = supabaseUrl.trim().replace(/\/$/, '');
+const cleanKey = supabaseKey.trim();
 
-// Создаём клиент БЕЗ realtime (вебсокетов)
-const supabase = createClient(supabaseUrl, supabaseKey, {
+console.log(`Очищенный URL: ${cleanUrl}`);
+console.log(`Ключ (первые 10 символов): ${cleanKey.substring(0, 10)}...`);
+
+const supabase = createClient(cleanUrl, cleanKey, {
   realtime: false,
   auth: {
     autoRefreshToken: false,
@@ -29,7 +33,7 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 async function backup() {
-  console.log('Начинаем резервное копирование...');
+  console.log('\nНачинаем резервное копирование...');
   const tables = [
     'profiles',
     'students',
@@ -46,14 +50,19 @@ async function backup() {
   const data = {};
 
   for (const table of tables) {
-    console.log(`Загрузка таблицы ${table}...`);
-    const { data: rows, error } = await supabase.from(table).select('*');
-    if (error) {
-      console.error(`Ошибка таблицы ${table}:`, error.message);
+    console.log(`\nЗагрузка таблицы ${table}...`);
+    try {
+      const { data: rows, error } = await supabase.from(table).select('*');
+      if (error) {
+        console.error(`❌ Ошибка при запросе ${table}:`, error.message);
+        process.exit(1);
+      }
+      data[table] = rows;
+      console.log(`  → получено ${rows.length} записей`);
+    } catch (err) {
+      console.error(`❌ Сетевая ошибка при запросе ${table}:`, err.message);
       process.exit(1);
     }
-    data[table] = rows;
-    console.log(`  → получено ${rows.length} записей`);
   }
 
   const backupDir = path.join(__dirname, '..', 'backups');
@@ -66,7 +75,7 @@ async function backup() {
   const filePath = path.join(backupDir, fileName);
 
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-  console.log(`✅ Резервная копия сохранена: ${fileName}`);
+  console.log(`\n✅ Резервная копия сохранена: ${fileName}`);
 }
 
 backup();
