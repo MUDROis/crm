@@ -2,27 +2,29 @@ name: Daily Backup
 
 on:
   schedule:
-    # Каждый день в 03:00 UTC (примерно 06:00 по Москве)
     - cron: '0 3 * * *'
-  workflow_dispatch: # позволяет запускать вручную через интерфейс GitHub
+  workflow_dispatch:
 
 jobs:
   backup:
     runs-on: ubuntu-latest
     permissions:
-      contents: write         # разрешаем пушить в репозиторий
+      contents: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
         with:
-          node-version: 20
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies
-        run: npm install @supabase/supabase-js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies (без кэша)
+        run: |
+          npm cache clean --force
+          npm install @supabase/supabase-js --no-save
 
       - name: Run backup script
         env:
