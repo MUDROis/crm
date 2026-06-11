@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import { updateSubscriptionUsage } from '@/utils/subscriptions'
 
 interface Student {
   id: string
@@ -34,7 +35,6 @@ interface Teacher {
   full_name: string
 }
 
-// Вспомогательная функция: добавляет минуты к времени в формате HH:MM
 function addMinutes(time: string, minutes: number): string {
   const [h, m] = time.split(':').map(Number)
   const date = new Date()
@@ -57,13 +57,12 @@ export default function LessonForm({
   onPostpone?: (data: Lesson) => void
   prefillData?: Lesson | null
 }) {
-  // Инициализация формы: при новом уроке автоматически ставим конец = начало + 50 мин
   const getDefaultEnd = (start: string) => addMinutes(start, 50)
 
   const initialData: Lesson = prefillData || lesson || {
     lesson_date: new Date().toISOString().split('T')[0],
     start_time: '09:00',
-    end_time: getDefaultEnd('09:00'), // 09:50
+    end_time: getDefaultEnd('09:00'),
     type: 'individual',
     student_id: null,
     group_id: null,
@@ -113,7 +112,6 @@ export default function LessonForm({
     const { name, value } = e.target
     setForm((prev) => {
       const updated = { ...prev, [name]: value }
-      // Если изменили время начала — автоматически сдвигаем время окончания на 50 минут
       if (name === 'start_time') {
         updated.end_time = addMinutes(value, 50)
       }
@@ -148,9 +146,7 @@ export default function LessonForm({
     }
   }
 
-  // Проверка конфликтов: возвращает массив конфликтующих уроков
   async function getConflicts(teacherId: string, date: string, start: string, end: string, excludeId?: string) {
-    // Находим уроки того же преподавателя в ту же дату
     let query = supabase
       .from('lessons')
       .select('id, start_time, end_time, type, student:students!student_id(full_name), group:groups!group_id(name)')
@@ -164,11 +160,9 @@ export default function LessonForm({
     const { data: existingLessons, error } = await query
     if (error || !existingLessons) return []
 
-    // Фильтруем пересекающиеся по времени
     return existingLessons.filter((l: any) => {
       const existStart = l.start_time
-      const existEnd = l.end_time || addMinutes(l.start_time, 50) // если нет конца, считаем 50 мин
-      // Пересечение: начало нового < конец существующего И конец нового > начало существующего
+      const existEnd = l.end_time || addMinutes(l.start_time, 50)
       return start < existEnd && end > existStart
     })
   }
@@ -187,14 +181,14 @@ export default function LessonForm({
       if (user) dataToSave.teacher_id = user.id
     }
 
-    // Проверка конфликтов, только если указан преподаватель и время
+    // Проверка конфликтов
     if (dataToSave.teacher_id && dataToSave.start_time && dataToSave.end_time) {
       const conflicts = await getConflicts(
         dataToSave.teacher_id,
         dataToSave.lesson_date,
         dataToSave.start_time,
         dataToSave.end_time,
-        form.id // исключаем текущий урок при редактировании
+        form.id
       )
 
       if (conflicts.length > 0) {
@@ -211,12 +205,12 @@ export default function LessonForm({
 
         if (!proceed) {
           setLoading(false)
-          return // отмена сохранения
+          return
         }
       }
     }
 
-    // Сохранение (повторяющиеся или одиночный урок)
+    // Сохранение
     if (repeat && !form.id && !prefillData) {
       const startDate = new Date(dataToSave.lesson_date)
       for (let i = 0; i < repeatWeeks; i++) {
@@ -228,8 +222,14 @@ export default function LessonForm({
       }
     } else {
       if (form.id) {
+        const oldStatus = lesson?.status
         const { error } = await supabase.from('lessons').update(dataToSave).eq('id', form.id)
         if (error) alert(error.message)
+        else {
+          if (oldStatus && dataToSave.status !== oldStatus) {
+            await updateSubscriptionUsage(form.id, dataToSave.status, oldStatus)
+          }
+        }
       } else {
         const { error } = await supabase.from('lessons').insert(dataToSave)
         if (error) alert(error.message)
@@ -240,10 +240,9 @@ export default function LessonForm({
     onSaved()
   }
 
-  // Безопасное удаление
   const handleDelete = async () => {
     if (!form.id) return
-    if (!confirm('Удалить урок навсегда? Это действие нельзя отменить.')) return
+    if (!confirm('Удалить урок навсегда?')) return
     setLoading(true)
 
     const { error: updateError } = await supabase
@@ -267,7 +266,6 @@ export default function LessonForm({
     }
   }
 
-  // Перенос урока
   const handlePostpone = async () => {
     if (!form.id) return
     setLoading(true)

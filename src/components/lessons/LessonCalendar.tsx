@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import LessonForm from '@/components/lessons/LessonForm'
+import { updateSubscriptionUsage } from '@/utils/subscriptions'
 
-// Интерфейс для урока из БД (с расширенными полями)
 interface CalendarLesson {
   id: string
   lesson_date: string
@@ -31,7 +31,7 @@ export default function LessonCalendar({ role }: { role: string }) {
   const [showCommentModal, setShowCommentModal] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [showEditForm, setShowEditForm] = useState(false)
-  const [postponePrefill, setPostponePrefill] = useState<any>(null) // Данные для формы переноса (тип Lesson из формы)
+  const [postponePrefill, setPostponePrefill] = useState<any>(null)
   const [showPostponeForm, setShowPostponeForm] = useState(false)
   const supabase = createClient()
 
@@ -113,8 +113,20 @@ export default function LessonCalendar({ role }: { role: string }) {
     setWeekStart(getMonday(newStart))
   }
 
+  async function changeStatus(lessonId: string, newStatus: string) {
+    const lesson = lessons.find(l => l.id === lessonId)
+    const oldStatus = lesson?.status
+
+    const { error } = await supabase.from('lessons').update({ status: newStatus }).eq('id', lessonId)
+    if (!error) {
+      await updateSubscriptionUsage(lessonId, newStatus, oldStatus)
+      loadLessons()
+    } else {
+      alert(error.message)
+    }
+  }
+
   const handlePostponeFromEdit = (lessonData: any) => {
-    // lessonData – объект из формы (Lesson)
     supabase.from('lessons').update({ status: 'postponed' }).eq('id', lessonData.id!).then(() => {
       const newDate = new Date(lessonData.lesson_date)
       newDate.setDate(newDate.getDate() + 7)
@@ -180,7 +192,15 @@ export default function LessonCalendar({ role }: { role: string }) {
                       <button onClick={() => openComment(lesson)} className="text-blue-600 hover:underline">Комм.</button>
                       <button onClick={() => openEditForm(lesson)} className="text-purple-600 hover:underline">Ред.</button>
                       {role === 'admin' && (
-                        <button onClick={() => deleteLesson(lesson.id)} className="text-red-600 hover:underline">Удал.</button>
+                        <>
+                          {lesson.status === 'planned' && (
+                            <button onClick={() => changeStatus(lesson.id, 'completed')} className="text-green-600 hover:underline">Пров.</button>
+                          )}
+                          {lesson.status === 'completed' && (
+                            <button onClick={() => changeStatus(lesson.id, 'planned')} className="text-blue-600 hover:underline">Запл.</button>
+                          )}
+                          <button onClick={() => deleteLesson(lesson.id)} className="text-red-600 hover:underline">Удал.</button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -191,7 +211,6 @@ export default function LessonCalendar({ role }: { role: string }) {
         </div>
       )}
 
-      {/* Модальное окно комментария */}
       {showCommentModal && editingLesson && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-md">
@@ -210,7 +229,6 @@ export default function LessonCalendar({ role }: { role: string }) {
         </div>
       )}
 
-      {/* Форма редактирования урока */}
       {showEditForm && editingLesson && (
         <LessonForm
           onClose={() => {
@@ -240,7 +258,6 @@ export default function LessonCalendar({ role }: { role: string }) {
         />
       )}
 
-      {/* Форма создания после переноса */}
       {showPostponeForm && postponePrefill && (
         <LessonForm
           onClose={handleClosePostpone}

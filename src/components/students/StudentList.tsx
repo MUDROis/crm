@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import StudentInfoModal from './StudentInfoModal'
 
 interface Student {
   id: string
@@ -22,6 +23,7 @@ export default function StudentList({ onEdit }: { onEdit: (student: any) => void
   const [filterSubject, setFilterSubject] = useState('')
   const [teachers, setTeachers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -101,12 +103,16 @@ export default function StudentList({ onEdit }: { onEdit: (student: any) => void
                 <td className="border p-2">{s.customer_name}</td>
                 <td className="border p-2 space-x-2">
                   <button onClick={() => onEdit(s)} className="text-blue-600 hover:underline">Ред.</button>
+                  <button onClick={() => setSelectedStudentId(s.id)} className="text-green-600 hover:underline">Подробнее</button>
                   <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:underline">Удал.</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+      {selectedStudentId && (
+        <StudentInfoModal studentId={selectedStudentId} onClose={() => setSelectedStudentId(null)} />
       )}
     </div>
   )
