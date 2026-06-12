@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { createClient } from '@/utils/supabase/client'
 import StudentInfoModal from './StudentInfoModal'
 
-export default function StudentList({ onEdit }: { onEdit: (student: any) => void }) {
+export default function StudentList({ onEdit, refreshKey }: { onEdit: (student: any) => void, refreshKey: number }) {
   const [search, setSearch] = useState('')
   const [filterTeacher, setFilterTeacher] = useState('')
   const [filterSubject, setFilterSubject] = useState('')
@@ -31,6 +31,11 @@ export default function StudentList({ onEdit }: { onEdit: (student: any) => void
   const filterKey = `students-${search}-${filterTeacher}-${filterSubject}`
   const { data: students, loading, refetch } = useSupabaseQuery(filterKey, fetchStudents)
 
+  // Вызываем refetch при изменении refreshKey
+  useEffect(() => {
+    refetch()
+  }, [refreshKey, refetch])
+
   const handleDelete = async (id: string) => {
     if (!confirm('Удалить ученика?')) return
     const supabase = createClient()
@@ -48,7 +53,6 @@ export default function StudentList({ onEdit }: { onEdit: (student: any) => void
 
   return (
     <div>
-      {/* ... (остальной JSX без изменений) ... */}
       <div className="flex gap-4 mb-4">
         <input placeholder="Поиск по ФИО" value={search} onChange={e => setSearch(e.target.value)} className="border p-2 rounded flex-1" />
         <select value={filterTeacher} onChange={e => setFilterTeacher(e.target.value)} className="border p-2 rounded">

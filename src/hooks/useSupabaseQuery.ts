@@ -83,7 +83,21 @@ export function useSupabaseQuery<T = any>(
       } catch (err: any) {
         // AbortError – нормальная ситуация при отмене запроса
         if (err.name !== 'AbortError') {
-          console.error(`Ошибка запроса (${key}):`, err?.message || err)
+          const errorMessage = err?.message || err || 'Неизвестная ошибка'
+          console.error(`Ошибка запроса (${key}):`, errorMessage)
+          
+          // Добавляем подсказку для типичных проблем
+          if (errorMessage.includes('Failed to fetch')) {
+            console.error(
+              'Подсказка: Ошибка "Failed to fetch" обычно означает:\n' +
+              '1. Проверьте подключение к интернету\n' +
+              '2. Убедитесь, что NEXT_PUBLIC_SUPABASE_URL в .env.local правильный\n' +
+              '3. Убедитесь, что NEXT_PUBLIC_SUPABASE_ANON_KEY в .env.local правильный\n' +
+              '4. Проверьте, что Supabase проект не заблокирован или не истёк срок действия\n' +
+              '5. Проверьте настройки CORS в Supabase dashboard (Network > API Settings)'
+            )
+          }
+          
           setLoading(false)
         }
       }

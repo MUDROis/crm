@@ -32,7 +32,7 @@ export default function AdminStudentsPage() {
           + Добавить ученика
         </button>
       </div>
-      <StudentList key={refreshKey} onEdit={handleEdit} />
+      <StudentList refreshKey={refreshKey} onEdit={handleEdit} />
       {showForm && (
         <StudentForm
           onClose={() => setShowForm(false)}
