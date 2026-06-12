@@ -1,49 +1,28 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { createClient } from '@/utils/supabase/client'
 
-interface Subscription {
-  id: string
-  student_id: string
-  total_lessons: number
-  remaining_lessons: number
-  valid_until: string
-  students: { full_name: string } | null
-}
-
 export default function SubscriptionsTab() {
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
-  const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [editingSub, setEditingSub] = useState<Subscription | null>(null)
-  const [form, setForm] = useState({
-    student_id: '',
-    total_lessons: 0,
-    remaining_lessons: 0,
-    valid_until: '',
-  })
-  const [students, setStudents] = useState<any[]>([])
+  const [editingSub, setEditingSub] = useState<any>(null)
+  const [form, setForm] = useState({ student_id: '', total_lessons: 0, remaining_lessons: 0, valid_until: '' })
   const supabase = createClient()
 
-  useEffect(() => {
-    loadSubscriptions()
-    loadStudents()
-  }, [])
-
-  async function loadSubscriptions() {
+  const { data: subscriptions, loading, refetch } = useSupabaseQuery('subscriptions-list', async (supabase) => {
     const { data, error } = await supabase
       .from('subscriptions')
       .select('*, students(full_name)')
       .order('created_at', { ascending: false })
-    if (!error && data) setSubscriptions(data)
-    setLoading(false)
-  }
+    if (error) throw error
+    return data || []
+  })
 
-  async function loadStudents() {
+  const { data: students } = useSupabaseQuery('students-for-subscriptions', async (supabase) => {
     const { data } = await supabase.from('students').select('id, full_name').order('full_name')
-    if (data) setStudents(data)
-  }
+    return data || []
+  })
 
   const handleAdd = () => {
     setEditingSub(null)
@@ -51,7 +30,7 @@ export default function SubscriptionsTab() {
     setShowForm(true)
   }
 
-  const handleEdit = (sub: Subscription) => {
+  const handleEdit = (sub: any) => {
     setEditingSub(sub)
     setForm({
       student_id: sub.student_id,
@@ -65,28 +44,22 @@ export default function SubscriptionsTab() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (editingSub) {
-      const { error } = await supabase.from('subscriptions').update(form).eq('id', editingSub.id)
-      if (error) alert(error.message)
-      else {
-        setShowForm(false)
-        loadSubscriptions()
-      }
+      await supabase.from('subscriptions').update(form).eq('id', editingSub.id)
     } else {
-      const { error } = await supabase.from('subscriptions').insert(form)
-      if (error) alert(error.message)
-      else {
-        setShowForm(false)
-        loadSubscriptions()
-      }
+      await supabase.from('subscriptions').insert(form)
+    }
+    setShowForm(false)
+    refetch()
+  }
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Удалить абонемент?')) {
+      await supabase.from('subscriptions').delete().eq('id', id)
+      refetch()
     }
   }
 
-  async function handleDelete(id: string) {
-    if (confirm('Удалить абонемент?')) {
-      await supabase.from('subscriptions').delete().eq('id', id)
-      loadSubscriptions()
-    }
-  }
+  if (loading) return <p>Загрузка...</p>
 
   return (
     <div>
@@ -94,33 +67,31 @@ export default function SubscriptionsTab() {
         <h2 className="text-xl font-semibold">Абонементы</h2>
         <button onClick={handleAdd} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">+ Добавить</button>
       </div>
-      {loading ? <p>Загрузка...</p> : (
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2 text-left">Ученик</th>
-              <th className="border p-2 text-left">Всего занятий</th>
-              <th className="border p-2 text-left">Осталось</th>
-              <th className="border p-2 text-left">Действует до</th>
-              <th className="border p-2 text-left">Действия</th>
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border p-2 text-left">Ученик</th>
+            <th className="border p-2 text-left">Всего занятий</th>
+            <th className="border p-2 text-left">Осталось</th>
+            <th className="border p-2 text-left">Действует до</th>
+            <th className="border p-2 text-left">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          {subscriptions?.map((s: any) => (
+            <tr key={s.id}>
+              <td className="border p-2">{s.students?.full_name || '-'}</td>
+              <td className="border p-2">{s.total_lessons}</td>
+              <td className="border p-2">{s.remaining_lessons}</td>
+              <td className="border p-2">{s.valid_until}</td>
+              <td className="border p-2 space-x-2">
+                <button onClick={() => handleEdit(s)} className="text-blue-600 hover:underline">Ред.</button>
+                <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:underline">Удал.</button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {subscriptions.map(s => (
-              <tr key={s.id}>
-                <td className="border p-2">{s.students?.full_name || '-'}</td>
-                <td className="border p-2">{s.total_lessons}</td>
-                <td className="border p-2">{s.remaining_lessons}</td>
-                <td className="border p-2">{s.valid_until}</td>
-                <td className="border p-2 space-x-2">
-                  <button onClick={() => handleEdit(s)} className="text-blue-600 hover:underline">Ред.</button>
-                  <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:underline">Удал.</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-md">
@@ -130,7 +101,7 @@ export default function SubscriptionsTab() {
                 <label className="block text-sm">Ученик *</label>
                 <select value={form.student_id} onChange={(e) => setForm({...form, student_id: e.target.value})} required className="w-full border p-2 rounded">
                   <option value="">Выберите...</option>
-                  {students.map(s => <option key={s.id} value={s.id}>{s.full_name}</option>)}
+                  {students?.map((s: any) => <option key={s.id} value={s.id}>{s.full_name}</option>)}
                 </select>
               </div>
               <div>

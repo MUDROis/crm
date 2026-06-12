@@ -1,19 +1,11 @@
-import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
+import AuthGuard from '@/components/AuthGuard'
 import TeacherNavbar from '@/components/TeacherNavbar'
 
-export default async function TeacherLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'teacher') redirect('/admin')
-
+export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div>
+    <AuthGuard requiredRole="teacher">
       <TeacherNavbar />
       <div>{children}</div>
-    </div>
+    </AuthGuard>
   )
 }

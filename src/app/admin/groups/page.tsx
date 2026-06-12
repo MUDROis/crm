@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import GroupList from '@/components/groups/GroupList'
 import GroupForm from '@/components/groups/GroupForm'
 
 export default function AdminGroupsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingGroup, setEditingGroup] = useState<any>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const handleEdit = (group: any) => {
     setEditingGroup(group)
@@ -18,10 +19,10 @@ export default function AdminGroupsPage() {
     setShowForm(true)
   }
 
-  const handleSaved = () => {
+  const handleSaved = useCallback(() => {
     setShowForm(false)
-    window.location.reload()
-  }
+    setRefreshKey(prev => prev + 1)
+  }, [])
 
   return (
     <div className="p-6">
@@ -31,7 +32,7 @@ export default function AdminGroupsPage() {
           + Добавить группу
         </button>
       </div>
-      <GroupList onEdit={handleEdit} />
+      <GroupList key={refreshKey} onEdit={handleEdit} />
       {showForm && (
         <GroupForm
           onClose={() => setShowForm(false)}

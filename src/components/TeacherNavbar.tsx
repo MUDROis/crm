@@ -28,16 +28,12 @@ export default function TeacherNavbar() {
 
     fetchPendingTasks()
 
-    // Подписка на изменения в реальном времени (опционально)
+    // Подписка на изменения задач в реальном времени
     const channel = supabase
       .channel('tasks-changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks',
-        },
+        { event: '*', schema: 'public', table: 'tasks' },
         () => {
           fetchPendingTasks()
         }
@@ -52,11 +48,11 @@ export default function TeacherNavbar() {
   return (
     <nav className="bg-white shadow p-4 flex justify-between items-center">
       <Link href="/teacher" className="text-xl font-bold text-gray-800 hover:text-blue-600">
-        CRM Школа
+        ИНТЕРАКТИВНАЯ ШКОЛА МУДРО
       </Link>
       <div className="flex items-center gap-6">
         <Link href="/teacher/lessons" className="text-gray-600 hover:text-blue-600">
-          Мои уроки
+          Расписание
         </Link>
         <Link href="/teacher/tasks" className="relative text-gray-600 hover:text-blue-600">
           Задачи

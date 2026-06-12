@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import TaskList from '@/components/tasks/TaskList'
 import TaskForm from '@/components/tasks/TaskForm'
 
 export default function AdminTasksPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingTask, setEditingTask] = useState<any>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const handleEdit = (task: any) => {
     setEditingTask(task)
@@ -18,10 +19,10 @@ export default function AdminTasksPage() {
     setShowForm(true)
   }
 
-  const handleSaved = () => {
+  const handleSaved = useCallback(() => {
     setShowForm(false)
-    window.location.reload()
-  }
+    setRefreshKey(prev => prev + 1)
+  }, [])
 
   return (
     <div className="p-6">
@@ -31,7 +32,7 @@ export default function AdminTasksPage() {
           + Поставить задачу
         </button>
       </div>
-      <TaskList role="admin" onEdit={handleEdit} />
+      <TaskList key={refreshKey} role="admin" onEdit={handleEdit} />
       {showForm && (
         <TaskForm
           onClose={() => setShowForm(false)}

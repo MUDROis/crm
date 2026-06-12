@@ -1,37 +1,24 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { createClient } from '@/utils/supabase/client'
 import Link from 'next/link'
 
-interface Group {
-  id: string
-  name: string
-  subject: string
-  teacher_id: string
-  teacher: { full_name: string } | null
-}
-
 export default function GroupList({ onEdit }: { onEdit: (group: any) => void }) {
-  const [groups, setGroups] = useState<Group[]>([])
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const { data: groups, loading, refetch } = useSupabaseQuery('groups-list', async (supabase) => {
+    const { data, error } = await supabase
+      .from('groups')
+      .select('*, teacher:profiles!teacher_id(full_name)')
+      .order('name')
+    if (error) throw error
+    return data || []
+  })
 
-  useEffect(() => {
-    loadGroups()
-  }, [])
-
-  async function loadGroups() {
-    const { data, error } = await supabase.from('groups').select('*, teacher:profiles!teacher_id(full_name)').order('name')
-    if (!error && data) setGroups(data)
-    setLoading(false)
-  }
-
-  async function handleDelete(id: string) {
-    if (confirm('Удалить группу?')) {
-      await supabase.from('groups').delete().eq('id', id)
-      loadGroups()
-    }
+  const handleDelete = async (id: string) => {
+    if (!confirm('Удалить группу?')) return
+    const supabase = createClient()
+    await supabase.from('groups').delete().eq('id', id)
+    refetch() // обновляем список
   }
 
   if (loading) return <p>Загрузка...</p>
@@ -47,7 +34,7 @@ export default function GroupList({ onEdit }: { onEdit: (group: any) => void }) 
         </tr>
       </thead>
       <tbody>
-        {groups.map((g) => (
+        {groups?.map((g: any) => (
           <tr key={g.id}>
             <td className="border p-2">{g.name}</td>
             <td className="border p-2">{g.subject}</td>

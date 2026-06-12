@@ -1,67 +1,60 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { createClient } from '@/utils/supabase/client'
-
-interface Task {
-  id: string
-  assigned_to: string
-  created_by: string
-  title: string
-  description: string
-  completed: boolean
-  due_date: string
-  created_at: string
-  assigned: { full_name: string } | null
-  creator: { full_name: string } | null
-}
 
 export default function TaskList({
   role,
   onEdit,
 }: {
   role: 'admin' | 'teacher'
-  onEdit?: (task: Task) => void
+  onEdit?: (task: any) => void
 }) {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [loading, setLoading] = useState(true)
+  const [userId, setUserId] = useState<string | null>(null)
   const supabase = createClient()
 
+  // Получаем userId для преподавателя
   useEffect(() => {
-    loadTasks()
-  }, [role])
+    if (role === 'teacher') {
+      supabase.auth.getUser().then(({ data }) => {
+        if (data.user) setUserId(data.user.id)
+      })
+    } else {
+      setUserId('admin') // фиктивный ключ
+    }
+  }, [role, supabase])
 
-  async function loadTasks() {
-    setLoading(true)
+  const queryKey = role === 'admin' ? 'tasks-admin' : `tasks-${userId}`
+
+  const { data: tasks, loading, refetch } = useSupabaseQuery(queryKey, async (supabase) => {
     let query = supabase
       .from('tasks')
       .select('*, assigned:profiles!assigned_to(full_name), creator:profiles!created_by(full_name)')
       .order('created_at', { ascending: false })
 
-    // Если преподаватель, показываем только его задачи
-    if (role === 'teacher') {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) query = query.eq('assigned_to', user.id)
+    if (role === 'teacher' && userId) {
+      query = query.eq('assigned_to', userId)
     }
-
     const { data, error } = await query
-    if (!error && data) setTasks(data)
-    setLoading(false)
-  }
+    if (error) throw error
+    return data || []
+  })
 
-  async function toggleComplete(taskId: string, current: boolean) {
+  const toggleComplete = async (taskId: string, current: boolean) => {
+    const supabase = createClient()
     await supabase.from('tasks').update({ completed: !current }).eq('id', taskId)
-    loadTasks()
+    refetch()
   }
 
-  async function handleDelete(taskId: string) {
-    if (confirm('Удалить задачу?')) {
-      await supabase.from('tasks').delete().eq('id', taskId)
-      loadTasks()
-    }
+  const handleDelete = async (taskId: string) => {
+    if (!confirm('Удалить задачу?')) return
+    const supabase = createClient()
+    await supabase.from('tasks').delete().eq('id', taskId)
+    refetch()
   }
 
-  if (loading) return <p>Загрузка...</p>
+  if (loading || (role === 'teacher' && !userId)) return <p>Загрузка...</p>
 
   return (
     <table className="w-full border-collapse">
@@ -75,11 +68,9 @@ export default function TaskList({
         </tr>
       </thead>
       <tbody>
-        {tasks.map((task) => (
+        {tasks?.map((task: any) => (
           <tr key={task.id} className={task.completed ? 'bg-green-50' : ''}>
-            <td className="border p-2">
-              {task.completed ? '✅ Выполнено' : '⏳ Ожидает'}
-            </td>
+            <td className="border p-2">{task.completed ? '✅ Выполнено' : '⏳ Ожидает'}</td>
             <td className="border p-2">
               <div className="font-medium">{task.title}</div>
               {task.description && <div className="text-xs text-gray-600">{task.description}</div>}
@@ -88,24 +79,16 @@ export default function TaskList({
             <td className="border p-2">{task.due_date || '-'}</td>
             <td className="border p-2 space-x-2">
               {role === 'teacher' && !task.completed && (
-                <button onClick={() => toggleComplete(task.id, task.completed)} className="text-green-600 hover:underline">
-                  Выполнено
-                </button>
+                <button onClick={() => toggleComplete(task.id, task.completed)} className="text-green-600 hover:underline">Выполнено</button>
               )}
               {role === 'teacher' && task.completed && (
-                <button onClick={() => toggleComplete(task.id, task.completed)} className="text-blue-600 hover:underline">
-                  Вернуть в работу
-                </button>
+                <button onClick={() => toggleComplete(task.id, task.completed)} className="text-blue-600 hover:underline">Вернуть в работу</button>
               )}
               {role === 'admin' && onEdit && (
-                <button onClick={() => onEdit(task)} className="text-blue-600 hover:underline">
-                  Ред.
-                </button>
+                <button onClick={() => onEdit(task)} className="text-blue-600 hover:underline">Ред.</button>
               )}
               {role === 'admin' && (
-                <button onClick={() => handleDelete(task.id)} className="text-red-600 hover:underline">
-                  Удал.
-                </button>
+                <button onClick={() => handleDelete(task.id)} className="text-red-600 hover:underline">Удал.</button>
               )}
             </td>
           </tr>

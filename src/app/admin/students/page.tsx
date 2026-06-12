@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import StudentList from '@/components/students/StudentList'
 import StudentForm from '@/components/students/StudentForm'
 
 export default function AdminStudentsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingStudent, setEditingStudent] = useState<any>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const handleEdit = (student: any) => {
     setEditingStudent(student)
@@ -18,11 +19,10 @@ export default function AdminStudentsPage() {
     setShowForm(true)
   }
 
-  const handleSaved = () => {
+  const handleSaved = useCallback(() => {
     setShowForm(false)
-    // Обновить список после сохранения
-    window.location.reload() // простой способ, можно доработать
-  }
+    setRefreshKey(prev => prev + 1) // увеличиваем ключ → список пересоздаётся
+  }, [])
 
   return (
     <div className="p-6">
@@ -32,7 +32,7 @@ export default function AdminStudentsPage() {
           + Добавить ученика
         </button>
       </div>
-      <StudentList onEdit={handleEdit} />
+      <StudentList key={refreshKey} onEdit={handleEdit} />
       {showForm && (
         <StudentForm
           onClose={() => setShowForm(false)}
