@@ -2,15 +2,13 @@
 
 import { useState } from 'react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { createClient } from '@/utils/supabase/client'
 
 export default function SubscriptionsTab() {
   const [showForm, setShowForm] = useState(false)
   const [editingSub, setEditingSub] = useState<any>(null)
   const [form, setForm] = useState({ student_id: '', total_lessons: 0, remaining_lessons: 0, valid_until: '' })
-  const supabase = createClient()
 
-  const { data: subscriptions, loading, refetch } = useSupabaseQuery('subscriptions-list', async (supabase) => {
+  const { data: subscriptions, loading, refetch, supabase } = useSupabaseQuery('subscriptions-list', async (supabase) => {
     const { data, error } = await supabase
       .from('subscriptions')
       .select('*, students(full_name)')

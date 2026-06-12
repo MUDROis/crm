@@ -96,5 +96,5 @@ export function useSupabaseQuery<T = any>(
     }
   }, [key, refreshCounter, supabase])
 
-  return { data, loading, refetch }
+  return { data, loading, refetch, supabase }
 }

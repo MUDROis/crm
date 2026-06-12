@@ -1,5 +1,11 @@
 import AuthGuard from '@/components/AuthGuard'
+import AdminNavbar from '@/components/AdminNavbar'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <AuthGuard requiredRole="admin">{children}</AuthGuard>
+  return (
+    <AuthGuard requiredRole="admin">
+      <AdminNavbar />
+      <div>{children}</div>
+    </AuthGuard>
+  )
 }
