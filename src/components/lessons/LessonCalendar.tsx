@@ -35,12 +35,29 @@ export default function LessonCalendar({ role }: { role: string }) {
   const [showPostponeForm, setShowPostponeForm] = useState(false)
   const supabase = createClient()
 
-  function getMonday(date: Date) {
+  // Возвращает понедельник текущей недели (UTC) в формате YYYY-MM-DD
+  function getMonday(date: Date): string {
     const d = new Date(date)
-    const day = d.getDay()
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-    d.setDate(diff)
+    // Устанавливаем на UTC-полдень, чтобы избежать сдвигов даты
+    d.setUTCHours(12, 0, 0, 0)
+    const day = d.getUTCDay()
+    const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1)
+    d.setUTCDate(diff)
     return d.toISOString().split('T')[0]
+  }
+
+  // Отображаемый диапазон «8 – 14 июня 2026»
+  function formatWeekRange(start: string): string {
+    const startDate = new Date(start)
+    const endDate = new Date(startDate)
+    endDate.setDate(endDate.getDate() + 6)
+
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' }
+    const startStr = startDate.toLocaleDateString('ru-RU', options)
+    const endStr = endDate.toLocaleDateString('ru-RU', options)
+    const year = endDate.getFullYear()
+
+    return `${startStr} – ${endStr} ${year}`
   }
 
   useEffect(() => {
@@ -108,9 +125,9 @@ export default function LessonCalendar({ role }: { role: string }) {
   }
 
   function changeWeek(offset: number) {
-    const newStart = new Date(weekStart)
-    newStart.setDate(newStart.getDate() + offset * 7)
-    setWeekStart(getMonday(newStart))
+    const currentStart = new Date(weekStart)
+    currentStart.setDate(currentStart.getDate() + offset * 7)
+    setWeekStart(getMonday(currentStart))
   }
 
   async function changeStatus(lessonId: string, newStatus: string) {
@@ -161,7 +178,7 @@ export default function LessonCalendar({ role }: { role: string }) {
     <div>
       <div className="flex justify-between items-center mb-4">
         <button onClick={() => changeWeek(-1)} className="px-3 py-1 border rounded">← Пред.</button>
-        <h2 className="text-xl font-semibold">{weekStart} — {new Date(new Date(weekStart).setDate(new Date(weekStart).getDate() + 6)).toISOString().split('T')[0]}</h2>
+        <h2 className="text-xl font-semibold">{formatWeekRange(weekStart)}</h2>
         <button onClick={() => changeWeek(1)} className="px-3 py-1 border rounded">След. →</button>
       </div>
 
@@ -211,6 +228,7 @@ export default function LessonCalendar({ role }: { role: string }) {
         </div>
       )}
 
+      {/* Модальное окно комментария */}
       {showCommentModal && editingLesson && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-md">
@@ -229,6 +247,7 @@ export default function LessonCalendar({ role }: { role: string }) {
         </div>
       )}
 
+      {/* Форма редактирования урока */}
       {showEditForm && editingLesson && (
         <LessonForm
           onClose={() => {
@@ -258,6 +277,7 @@ export default function LessonCalendar({ role }: { role: string }) {
         />
       )}
 
+      {/* Форма создания после переноса */}
       {showPostponeForm && postponePrefill && (
         <LessonForm
           onClose={handleClosePostpone}
