@@ -28,11 +28,37 @@ interface Lesson {
   online_link: string
   comment: string
   status: string
+  subject_id?: string | null
+  room_id?: string | null
 }
 
 interface Teacher {
   id: string
   full_name: string
+}
+
+interface Subject {
+  id: string
+  name: string
+}
+
+interface Room {
+  id: string
+  name: string
+}
+
+// Округление времени вверх до ближайших 5 минут
+function getCurrentTime(): string {
+  const now = new Date()
+  let minutes = now.getMinutes()
+  // Если минуты не кратны 5, увеличиваем до следующего кратного 5
+  if (minutes % 5 !== 0) {
+    minutes = Math.ceil(minutes / 5) * 5
+  }
+  // Если округление перевалило за 60, корректируем часы (но оставим как есть – маловероятно)
+  const hours = now.getHours().toString().padStart(2, '0')
+  const mins = minutes.toString().padStart(2, '0')
+  return `${hours}:${mins}`
 }
 
 function addMinutes(time: string, minutes: number): string {
@@ -57,12 +83,13 @@ export default function LessonForm({
   onPostpone?: (data: Lesson) => void
   prefillData?: Lesson | null
 }) {
-  const getDefaultEnd = (start: string) => addMinutes(start, 50)
+  // Если это новый урок (не редактирование и не перенос), используем текущие дату и округлённое время
+  const isNew = !prefillData && !lesson
 
   const initialData: Lesson = prefillData || lesson || {
     lesson_date: new Date().toISOString().split('T')[0],
-    start_time: '09:00',
-    end_time: getDefaultEnd('09:00'),
+    start_time: isNew ? getCurrentTime() : '09:00',
+    end_time: isNew ? addMinutes(getCurrentTime(), 50) : addMinutes('09:00', 50),
     type: 'individual',
     student_id: null,
     group_id: null,
@@ -70,15 +97,25 @@ export default function LessonForm({
     online_link: '',
     comment: '',
     status: 'planned',
+    subject_id: null,
+    room_id: null,
   }
 
   const [form, setForm] = useState<Lesson>({ ...initialData })
   const [students, setStudents] = useState<Student[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [teachers, setTeachers] = useState<Teacher[]>([])
+  const [subjects, setSubjects] = useState<Subject[]>([])
+  const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(false)
   const [repeat, setRepeat] = useState(false)
   const [repeatWeeks, setRepeatWeeks] = useState(1)
+
+  const [showNewSubject, setShowNewSubject] = useState(false)
+  const [newSubjectName, setNewSubjectName] = useState('')
+  const [showNewRoom, setShowNewRoom] = useState(false)
+  const [newRoomName, setNewRoomName] = useState('')
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -106,12 +143,19 @@ export default function LessonForm({
       const { data: teachersData } = await supabase.from('profiles').select('id, full_name').eq('role', 'teacher')
       if (teachersData) setTeachers(teachersData)
     }
+
+    const { data: subjectsData } = await supabase.from('subjects').select('id, name').order('name')
+    if (subjectsData) setSubjects(subjectsData)
+
+    const { data: roomsData } = await supabase.from('rooms').select('id, name').order('name')
+    if (roomsData) setRooms(roomsData)
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setForm((prev) => {
       const updated = { ...prev, [name]: value }
+      // При изменении времени начала автоматически сдвигаем время окончания на 50 минут
       if (name === 'start_time') {
         updated.end_time = addMinutes(value, 50)
       }
@@ -144,6 +188,33 @@ export default function LessonForm({
         online_link: group?.online_link || prev.online_link
       }))
     }
+  }
+
+  // Быстрое добавление предмета/кабинета
+  const handleAddSubject = async () => {
+    if (!newSubjectName.trim()) return
+    const { data, error } = await supabase.from('subjects').insert({ name: newSubjectName.trim() }).select('id, name').single()
+    if (error) {
+      alert(error.message)
+      return
+    }
+    setSubjects(prev => [...prev, data!].sort((a, b) => a.name.localeCompare(b.name)))
+    setForm(prev => ({ ...prev, subject_id: data!.id }))
+    setNewSubjectName('')
+    setShowNewSubject(false)
+  }
+
+  const handleAddRoom = async () => {
+    if (!newRoomName.trim()) return
+    const { data, error } = await supabase.from('rooms').insert({ name: newRoomName.trim() }).select('id, name').single()
+    if (error) {
+      alert(error.message)
+      return
+    }
+    setRooms(prev => [...prev, data!].sort((a, b) => a.name.localeCompare(b.name)))
+    setForm(prev => ({ ...prev, room_id: data!.id }))
+    setNewRoomName('')
+    setShowNewRoom(false)
   }
 
   async function getConflicts(teacherId: string, date: string, start: string, end: string, excludeId?: string) {
@@ -181,7 +252,6 @@ export default function LessonForm({
       if (user) dataToSave.teacher_id = user.id
     }
 
-    // Проверка конфликтов
     if (dataToSave.teacher_id && dataToSave.start_time && dataToSave.end_time) {
       const conflicts = await getConflicts(
         dataToSave.teacher_id,
@@ -210,7 +280,6 @@ export default function LessonForm({
       }
     }
 
-    // Сохранение
     if (repeat && !form.id && !prefillData) {
       const startDate = new Date(dataToSave.lesson_date)
       for (let i = 0; i < repeatWeeks; i++) {
@@ -339,6 +408,74 @@ export default function LessonForm({
                 </select>
               </div>
             )}
+            <div>
+              <label className="block text-sm">Предмет</label>
+              <div className="flex gap-1">
+                <select
+                  name="subject_id"
+                  value={form.subject_id ?? ''}
+                  onChange={(e) => {
+                    if (e.target.value === '__new__') {
+                      setShowNewSubject(true)
+                    } else {
+                      handleChange(e)
+                    }
+                  }}
+                  className="flex-1 border p-2 rounded"
+                >
+                  <option value="">Не выбран</option>
+                  {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  <option value="__new__">+ Добавить предмет...</option>
+                </select>
+              </div>
+              {showNewSubject && (
+                <div className="flex gap-1 mt-1">
+                  <input
+                    type="text"
+                    value={newSubjectName}
+                    onChange={(e) => setNewSubjectName(e.target.value)}
+                    placeholder="Название предмета"
+                    className="flex-1 border p-2 rounded"
+                    autoFocus
+                  />
+                  <button type="button" onClick={handleAddSubject} className="bg-green-600 text-white px-3 py-2 rounded text-sm">OK</button>
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm">Кабинет</label>
+              <div className="flex gap-1">
+                <select
+                  name="room_id"
+                  value={form.room_id ?? ''}
+                  onChange={(e) => {
+                    if (e.target.value === '__new__') {
+                      setShowNewRoom(true)
+                    } else {
+                      handleChange(e)
+                    }
+                  }}
+                  className="flex-1 border p-2 rounded"
+                >
+                  <option value="">Не выбран</option>
+                  {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  <option value="__new__">+ Добавить кабинет...</option>
+                </select>
+              </div>
+              {showNewRoom && (
+                <div className="flex gap-1 mt-1">
+                  <input
+                    type="text"
+                    value={newRoomName}
+                    onChange={(e) => setNewRoomName(e.target.value)}
+                    placeholder="Название кабинета"
+                    className="flex-1 border p-2 rounded"
+                    autoFocus
+                  />
+                  <button type="button" onClick={handleAddRoom} className="bg-green-600 text-white px-3 py-2 rounded text-sm">OK</button>
+                </div>
+              )}
+            </div>
             <div className="col-span-2">
               <label className="block text-sm">Ссылка на онлайн-урок</label>
               <input type="url" name="online_link" value={form.online_link} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://..." />

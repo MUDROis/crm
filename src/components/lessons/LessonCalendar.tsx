@@ -17,10 +17,14 @@ interface CalendarLesson {
   student: { full_name: string } | null
   group: { name: string } | null
   teacher: { full_name: string } | null
+  subject: { name: string } | null
+  room: { name: string } | null
   original_lesson_id?: string | null
   student_id?: string | null
   group_id?: string | null
   teacher_id?: string | null
+  subject_id?: string | null
+  room_id?: string | null
 }
 
 export default function LessonCalendar({ role }: { role: string }) {
@@ -35,10 +39,8 @@ export default function LessonCalendar({ role }: { role: string }) {
   const [showPostponeForm, setShowPostponeForm] = useState(false)
   const supabase = createClient()
 
-  // Возвращает понедельник текущей недели (UTC) в формате YYYY-MM-DD
   function getMonday(date: Date): string {
     const d = new Date(date)
-    // Устанавливаем на UTC-полдень, чтобы избежать сдвигов даты
     d.setUTCHours(12, 0, 0, 0)
     const day = d.getUTCDay()
     const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1)
@@ -46,7 +48,6 @@ export default function LessonCalendar({ role }: { role: string }) {
     return d.toISOString().split('T')[0]
   }
 
-  // Отображаемый диапазон «8 – 14 июня 2026»
   function formatWeekRange(start: string): string {
     const startDate = new Date(start)
     const endDate = new Date(startDate)
@@ -74,7 +75,9 @@ export default function LessonCalendar({ role }: { role: string }) {
       *,
       student:students!student_id(full_name),
       group:groups!group_id(name),
-      teacher:profiles!teacher_id(full_name)
+      teacher:profiles!teacher_id(full_name),
+      subject:subjects!subject_id(name),
+      room:rooms!room_id(name)
     `).gte('lesson_date', weekStart).lte('lesson_date', endStr).order('lesson_date').order('start_time')
 
     const { data, error } = await query
@@ -201,6 +204,8 @@ export default function LessonCalendar({ role }: { role: string }) {
                   }`}>
                     <div className="font-medium">{lesson.start_time?.slice(0, 5)}-{lesson.end_time?.slice(0, 5)}</div>
                     <div>{lesson.student?.full_name || lesson.group?.name || '—'}</div>
+                    {lesson.subject && <div className="text-gray-500">{lesson.subject.name}</div>}
+                    {lesson.room && <div className="text-gray-500">каб. {lesson.room.name}</div>}
                     <div className="text-gray-600">{lesson.teacher?.full_name}</div>
                     {lesson.online_link && (
                       <a href={lesson.online_link} target="_blank" className="text-blue-500 underline block">Ссылка</a>
@@ -271,6 +276,8 @@ export default function LessonCalendar({ role }: { role: string }) {
             online_link: editingLesson.online_link,
             comment: editingLesson.comment,
             status: editingLesson.status,
+            subject_id: editingLesson.subject_id,
+            room_id: editingLesson.room_id,
           }}
           role={role}
           onPostpone={handlePostponeFromEdit}
