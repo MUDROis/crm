@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import LessonForm from '@/components/lessons/LessonForm'
 
@@ -34,6 +35,7 @@ interface Props {
 
 export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Props) {
   const [editing, setEditing] = useState(false)
+  const router = useRouter()
   const supabase = createClient()
 
   const statusLabel =
@@ -55,14 +57,10 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
     : ''
 
   const handleOverlayClick = () => {
-    if (editing) {
-      setEditing(false)
-    } else {
-      onClose()
-    }
+    if (editing) setEditing(false)
+    else onClose()
   }
 
-  // Отмена урока
   const handleCancelLesson = async () => {
     if (!confirm('Отменить урок?')) return
     const { error } = await supabase.from('lessons').update({ status: 'cancelled' }).eq('id', lesson.id)
@@ -71,39 +69,24 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
     onClose()
   }
 
-  // Провести урок из режима просмотра
   const handleConductFromView = async () => {
-    const { error } = await supabase
-      .from('lessons')
-      .update({ status: 'completed' })
-      .eq('id', lesson.id)
-    if (error) {
-      alert(error.message)
-      return
-    }
+    const { error } = await supabase.from('lessons').update({ status: 'completed' }).eq('id', lesson.id)
+    if (error) return alert(error.message)
     const { updateSubscriptionUsage } = await import('@/utils/subscriptions')
     await updateSubscriptionUsage(lesson.id, 'completed', lesson.status)
     onUpdate()
     onClose()
   }
 
-  // Провести урок из режима редактирования
   const handleConduct = async (formData: any) => {
-    const { error } = await supabase
-      .from('lessons')
-      .update({ ...formData, status: 'completed' })
-      .eq('id', lesson.id)
-    if (error) {
-      alert(error.message)
-      return
-    }
+    const { error } = await supabase.from('lessons').update({ ...formData, status: 'completed' }).eq('id', lesson.id)
+    if (error) return alert(error.message)
     const { updateSubscriptionUsage } = await import('@/utils/subscriptions')
     await updateSubscriptionUsage(lesson.id, 'completed', lesson.status)
     onUpdate()
     onClose()
   }
 
-  // Удаление урока
   const handleDelete = async () => {
     if (!confirm('Удалить урок навсегда?')) return
     await supabase.from('lessons').update({ original_lesson_id: null }).eq('original_lesson_id', lesson.id)
@@ -112,16 +95,35 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
     onClose()
   }
 
-  // Перенос урока
-  const handlePostpone = (formData: any) => {
+  const handlePostpone = () => {
     onClose()
     window.dispatchEvent(new CustomEvent('postponeLesson', { detail: lesson }))
+  }
+
+  // Переходы по ссылкам
+  const goToStudent = () => {
+    router.push('/admin/students')
+    onClose()
+  }
+
+  const goToGroup = () => {
+    if (lesson.group_id) {
+      router.push(`/admin/groups/${lesson.group_id}/students`)
+    } else {
+      router.push('/admin/groups')
+    }
+    onClose()
+  }
+
+  const goToTeacher = () => {
+    router.push('/admin/teachers')
+    onClose()
   }
 
   if (editing) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={handleOverlayClick}>
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
           <LessonForm
             lesson={{
               id: lesson.id,
@@ -154,10 +156,9 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
     )
   }
 
-  // Режим просмотра – теперь кнопка «Провести» на месте
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={handleOverlayClick}>
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6" onClick={e => e.stopPropagation()}>
         <h2 className="text-xl font-bold mb-4">
           {statusLabel} – {lesson.type === 'individual' ? 'Индивидуальный' : 'Групповой'}
         </h2>
@@ -183,7 +184,11 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
           )}
           <div>
             <span className="font-semibold">Педагог:</span>{' '}
-            {lesson.teacher?.full_name || 'Не назначен'}
+            {lesson.teacher?.full_name ? (
+              <span className="cursor-pointer text-blue-600 hover:underline" onClick={goToTeacher}>
+                {lesson.teacher.full_name}
+              </span>
+            ) : 'Не назначен'}
           </div>
           {lesson.subject && (
             <div>
@@ -192,9 +197,19 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
           )}
           <div>
             <span className="font-semibold">Участники:</span>{' '}
-            {lesson.type === 'individual'
-              ? lesson.student?.full_name || '—'
-              : lesson.group?.name || '—'}
+            {lesson.type === 'individual' ? (
+              lesson.student?.full_name ? (
+                <span className="cursor-pointer text-blue-600 hover:underline" onClick={goToStudent}>
+                  {lesson.student.full_name}
+                </span>
+              ) : '—'
+            ) : (
+              lesson.group?.name ? (
+                <span className="cursor-pointer text-blue-600 hover:underline" onClick={goToGroup}>
+                  {lesson.group.name}
+                </span>
+              ) : '—'
+            )}
           </div>
           <div>
             <span className="font-semibold">Комментарий:</span>
@@ -204,24 +219,14 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
           </div>
         </div>
 
-        {/* Кнопки: Отменить, Провести, Открыть */}
         <div className="mt-6 flex justify-end gap-3">
-          <button
-            onClick={handleCancelLesson}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-          >
+          <button onClick={handleCancelLesson} className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
             Отменить ✕
           </button>
-          <button
-            onClick={handleConductFromView}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-          >
+          <button onClick={handleConductFromView} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
             Провести
           </button>
-          <button
-            onClick={() => setEditing(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
+          <button onClick={() => setEditing(true)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
             Открыть ✓
           </button>
         </div>

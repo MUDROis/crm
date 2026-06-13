@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import LessonCardModal from '@/components/lessons/LessonCardModal'
+import LessonForm from '@/components/lessons/LessonForm'
 
 interface CalendarLesson {
   id: string
@@ -31,6 +32,7 @@ export default function LessonCalendar({ role }: { role: string }) {
   const [weekStart, setWeekStart] = useState(getMonday(new Date()))
   const [loading, setLoading] = useState(true)
   const [selectedLesson, setSelectedLesson] = useState<CalendarLesson | null>(null)
+  const [newLessonDate, setNewLessonDate] = useState<string | null>(null)
   const supabase = createClient()
 
   function getMonday(date: Date): string {
@@ -83,7 +85,8 @@ export default function LessonCalendar({ role }: { role: string }) {
     setWeekStart(getMonday(currentStart))
   }
 
-  const handleLessonClick = (lesson: CalendarLesson) => {
+  const handleLessonClick = (lesson: CalendarLesson, e: React.MouseEvent) => {
+    e.stopPropagation()
     setSelectedLesson(lesson)
   }
 
@@ -92,6 +95,19 @@ export default function LessonCalendar({ role }: { role: string }) {
   }
 
   const handleUpdate = () => {
+    loadLessons()
+  }
+
+  const handleDayClick = (dateStr: string) => {
+    setNewLessonDate(dateStr)
+  }
+
+  const handleCloseNewLesson = () => {
+    setNewLessonDate(null)
+  }
+
+  const handleNewLessonSaved = () => {
+    setNewLessonDate(null)
     loadLessons()
   }
 
@@ -121,14 +137,18 @@ export default function LessonCalendar({ role }: { role: string }) {
             date.setDate(date.getDate() + idx)
             const dateStr = date.toISOString().split('T')[0]
             return (
-              <div key={idx} className="border rounded p-2 min-h-[120px]">
+              <div
+                key={idx}
+                className="border rounded p-2 min-h-[120px] cursor-pointer"
+                onClick={() => handleDayClick(dateStr)}
+              >
                 <div className="font-semibold text-sm">{day} {date.getDate()}</div>
                 {lessonsByDay[dateStr]?.map(lesson => {
                   const teacherColor = lesson.teacher?.color || '#3B82F6'
                   return (
                     <div
                       key={lesson.id}
-                      onClick={() => handleLessonClick(lesson)}
+                      onClick={(e) => handleLessonClick(lesson, e)}
                       className={`mt-1 p-1 rounded text-xs cursor-pointer border-l border-r border-t border-b-2 ${
                         lesson.status === 'completed' ? 'bg-green-100' :
                         lesson.status === 'cancelled' || lesson.status === 'postponed' ? 'bg-red-100' :
@@ -160,6 +180,29 @@ export default function LessonCalendar({ role }: { role: string }) {
           role={role}
           onClose={handleCloseModal}
           onUpdate={handleUpdate}
+        />
+      )}
+
+      {newLessonDate && (
+        <LessonForm
+          onClose={handleCloseNewLesson}
+          onSaved={handleNewLessonSaved}
+          lesson={null}
+          role={role}
+          prefillData={{
+            lesson_date: newLessonDate,
+            start_time: '',
+            end_time: '',
+            type: 'individual',
+            student_id: null,
+            group_id: null,
+            teacher_id: '',
+            online_link: '',
+            comment: '',
+            status: 'planned',
+            subject_id: null,
+            room_id: null,
+          }}
         />
       )}
     </div>
