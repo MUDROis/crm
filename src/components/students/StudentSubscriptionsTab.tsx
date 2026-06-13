@@ -36,6 +36,11 @@ export default function StudentSubscriptionsTab({ studentId }: { studentId: stri
     setShowForm(true)
   }
 
+  const handleClose = () => {
+    setShowForm(false)
+    setEditingSub(null)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (editingSub) {
@@ -43,7 +48,7 @@ export default function StudentSubscriptionsTab({ studentId }: { studentId: stri
     } else {
       await supabase.from('subscriptions').insert({ ...form, student_id: studentId })
     }
-    setShowForm(false)
+    handleClose()
     refetch()
   }
 
@@ -91,8 +96,8 @@ export default function StudentSubscriptionsTab({ studentId }: { studentId: stri
       )}
 
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={handleClose}>
+          <div className="bg-white p-6 rounded-lg w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold mb-4">{editingSub ? 'Редактировать' : 'Новый абонемент'}</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
@@ -108,7 +113,7 @@ export default function StudentSubscriptionsTab({ studentId }: { studentId: stri
                 <input type="date" value={form.valid_until} onChange={(e) => setForm({...form, valid_until: e.target.value})} className="w-full border p-2 rounded" />
               </div>
               <div className="flex justify-end space-x-3 pt-4">
-                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded">Отмена</button>
+                <button type="button" onClick={handleClose} className="px-4 py-2 border rounded">Отмена</button>
                 <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Сохранить</button>
               </div>
             </form>

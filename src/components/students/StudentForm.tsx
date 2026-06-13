@@ -15,6 +15,7 @@ interface Student {
   customer_contact: string
   notes: string
   online_link: string
+  status: string
 }
 
 interface Teacher {
@@ -31,22 +32,20 @@ export default function StudentForm({
   onSaved: () => void
   student?: Student | null
 }) {
-    const cleanStudent = student ? {
-    id: student.id,
-    full_name: student.full_name,
-    phone: student.phone,
-    email: student.email,
-    subject: student.subject,
-    teacher_id: student.teacher_id,
-    type: student.type,
-    customer_name: student.customer_name,
-    customer_contact: student.customer_contact,
-    notes: student.notes,
-    online_link: student.online_link,
-  } : null;
-
   const [form, setForm] = useState<Student>(
-    cleanStudent || { full_name: '', phone: '', email: '', subject: '', teacher_id: '', type: 'individual', customer_name: '', customer_contact: '', notes: '', online_link: '' }
+    student || {
+      full_name: '',
+      phone: '',
+      email: '',
+      subject: '',
+      teacher_id: null,
+      type: 'individual',
+      customer_name: '',
+      customer_contact: '',
+      notes: '',
+      online_link: '',
+      status: 'active',
+    }
   )
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [loading, setLoading] = useState(false)
@@ -65,16 +64,12 @@ export default function StudentForm({
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-      const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    // Убираем пустые строки в uuid-полях, чтобы отправить null
     const dataToSave = { ...form }
     if (dataToSave.teacher_id === '') dataToSave.teacher_id = null
-
-    // Удаляем вложенный объект teacher, если он есть (от JOIN-запроса)
-    delete (dataToSave as any).teacher
 
     if (form.id) {
       const { error } = await supabase.from('students').update(dataToSave).eq('id', form.id)
@@ -88,8 +83,8 @@ export default function StudentForm({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="bg-white p-6 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-xl font-bold mb-4">{form.id ? 'Редактировать ученика' : 'Новый ученик'}</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-4">
@@ -123,6 +118,15 @@ export default function StudentForm({
               <select name="type" value={form.type} onChange={handleChange} className="w-full border p-2 rounded">
                 <option value="individual">Индивидуальные</option>
                 <option value="group">Групповые</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm">Статус</label>
+              <select name="status" value={form.status} onChange={handleChange} className="w-full border p-2 rounded">
+                <option value="active">Активный</option>
+                <option value="paused">Приостановлен</option>
+                <option value="stopped">Бросил</option>
+                <option value="archived">Архивный</option>
               </select>
             </div>
             <div>

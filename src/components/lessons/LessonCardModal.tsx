@@ -102,21 +102,27 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
 
   // Переходы по ссылкам
   const goToStudent = () => {
-    router.push('/admin/students')
+    if (lesson.student_id) {
+      const basePath = role === 'teacher' ? '/teacher/students' : '/admin/students'
+      router.push(`${basePath}/${lesson.student_id}`)
+    }
     onClose()
   }
 
   const goToGroup = () => {
     if (lesson.group_id) {
-      router.push(`/admin/groups/${lesson.group_id}/students`)
+      const basePath = role === 'teacher' ? '/teacher/students' : '/admin/groups'
+      router.push(`${basePath}/${lesson.group_id}/students`)
     } else {
-      router.push('/admin/groups')
+      const basePath = role === 'teacher' ? '/teacher/students' : '/admin/groups'
+      router.push(basePath)
     }
     onClose()
   }
 
   const goToTeacher = () => {
-    router.push('/admin/teachers')
+    const basePath = role === 'teacher' ? '/teacher/students' : '/admin/teachers'
+    router.push(basePath)
     onClose()
   }
 

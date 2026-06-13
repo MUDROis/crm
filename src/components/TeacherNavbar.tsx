@@ -1,49 +1,36 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/utils/supabase/client'
 
-export default function TeacherNavbar() {
-  const [pendingCount, setPendingCount] = useState(0)
-  const supabase = createClient()
+interface TeacherNavbarProps {
+  pendingCount?: number;
+}
+
+export default function TeacherNavbar({ pendingCount = 0 }: TeacherNavbarProps) {
+  const [count, setCount] = useState<number>(pendingCount)
 
   useEffect(() => {
-    async function fetchPendingTasks() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { count, error } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('assigned_to', user.id)
-        .eq('completed', false)
-
-      if (!error && count !== null) {
-        setPendingCount(count)
-      }
-    }
-
-    fetchPendingTasks()
-
-    // Подписка на изменения задач в реальном времени
-    const channel = supabase
-      .channel('tasks-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'tasks' },
-        () => {
-          fetchPendingTasks()
+    // Если количество задач не передано, загружаем его из Supabase
+    if (pendingCount === 0) {
+      const supabase = createClient()
+      
+      supabase.auth.getUser().then(({ data }) => {
+        if (data.user) {
+          const userId = data.user.id
+          supabase
+            .from('tasks')
+            .select('id', { count: 'exact', head: true })
+            .eq('assigned_to', userId)
+            .eq('completed', false)
+            .then(({ count }) => {
+              if (count !== null) setCount(count)
+            })
         }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
+      })
     }
-  }, [supabase])
+  }, [pendingCount])
 
   return (
     <nav className="bg-white shadow p-4 flex justify-between items-center">
@@ -51,16 +38,19 @@ export default function TeacherNavbar() {
         ИНТЕРАКТИВНАЯ ШКОЛА МУДРО
       </Link>
       <div className="flex items-center gap-6">
-        <Link href="/teacher/lessons" className="text-gray-600 hover:text-blue-600">
-          Расписание
+        <Link href="/teacher/lessons" className="text-2xl text-gray-600 hover:text-blue-600 transition">
+          📅
         </Link>
-        <Link href="/teacher/tasks" className="relative text-gray-600 hover:text-blue-600">
-          Задачи
-          {pendingCount > 0 && (
+        <Link href="/teacher/tasks" className="relative text-2xl text-gray-600 hover:text-blue-600 transition">
+          📋
+          {count > 0 && (
             <span className="absolute -top-2 -right-5 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-              {pendingCount}
+              {count}
             </span>
           )}
+        </Link>
+        <Link href="/teacher/students" className="text-2xl text-gray-600 hover:text-blue-600 transition">
+          👩‍🎓
         </Link>
       </div>
     </nav>
