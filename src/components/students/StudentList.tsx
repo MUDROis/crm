@@ -5,11 +5,24 @@ import Link from 'next/link'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { createClient } from '@/utils/supabase/client'
 
+interface Student {
+  id: string
+  full_name: string
+  phone: string
+  email: string
+  subject: string
+  teacher_id: string
+  type: string
+  customer_name: string
+  status: string
+  profiles: { full_name: string } | null
+}
+
 export default function StudentList() {
   const [search, setSearch] = useState('')
   const [filterTeacher, setFilterTeacher] = useState('')
   const [filterSubject, setFilterSubject] = useState('')
-  const [filterStatus, setFilterStatus] = useState('active') // 'active' | 'archived' | 'all'
+  const [filterStatus, setFilterStatus] = useState('active')
 
   const fetchTeachers = useCallback(async (supabase: ReturnType<typeof createClient>) => {
     const { data } = await supabase.from('profiles').select('id, full_name').eq('role', 'teacher')
@@ -17,7 +30,7 @@ export default function StudentList() {
   }, [])
 
   const fetchStudents = useCallback(async (supabase: ReturnType<typeof createClient>) => {
-    let query = supabase.from('students').select('*, teacher:profiles!teacher_id(full_name)')
+    let query = supabase.from('students').select('*, profiles!teacher_id(full_name)')
     if (search) query = query.ilike('full_name', `%${search}%`)
     if (filterTeacher) query = query.eq('teacher_id', filterTeacher)
     if (filterSubject) query = query.ilike('subject', `%${filterSubject}%`)
@@ -43,7 +56,6 @@ export default function StudentList() {
     refetch()
   }
 
-  // Восстановить из архива
   const handleRestore = async (id: string) => {
     if (!confirm('Вернуть ученика в активные?')) return
     const supabase = createClient()
@@ -122,7 +134,7 @@ export default function StudentList() {
                 </Link>
               </td>
               <td className="border p-2">{s.subject}</td>
-              <td className="border p-2">{s.teacher?.full_name || '-'}</td>
+              <td className="border p-2">{s.profiles?.full_name || '-'}</td>
               <td className="border p-2">{s.type === 'individual' ? 'Инд.' : 'Групп.'}</td>
               <td className="border p-2">{s.customer_name}</td>
               <td className="border p-2 space-x-2">

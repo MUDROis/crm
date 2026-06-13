@@ -19,7 +19,7 @@ export default function TeacherStudentsPage() {
 
     const { data, error } = await supabase
       .from('students')
-      .select('*, teacher:profiles!teacher_id(full_name)')
+      .select('*, full_name')
       .eq('teacher_id', user.id)
       .order('full_name')
 

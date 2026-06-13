@@ -34,13 +34,21 @@ interface Props {
   onDayClick?: (dateStr: string) => void
 }
 
+// Вспомогательная функция для добавления минут
+function addMinutes(time: string, minutes: number): string {
+  const [h, m] = time.split(':').map(Number)
+  const date = new Date()
+  date.setHours(h, m + minutes, 0, 0)
+  return date.toTimeString().slice(0, 5)
+}
+
 export default function LessonCalendar({ role, studentId, groupIds, onDayClick }: Props) {
   const [lessons, setLessons] = useState<CalendarLesson[]>([])
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week')
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [loading, setLoading] = useState(true)
   const [selectedLesson, setSelectedLesson] = useState<CalendarLesson | null>(null)
-  const [newLessonDate, setNewLessonDate] = useState<string | null>(null)
+  const [newLessonPrefill, setNewLessonPrefill] = useState<any>(null)
   const [teachers, setTeachers] = useState<any[]>([])
   const [rooms, setRooms] = useState<any[]>([])
   const [students, setStudents] = useState<any[]>([])
@@ -49,7 +57,6 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
   const [filterStudentId, setFilterStudentId] = useState<string>('')
   const supabase = createClient()
 
-  // вычисляем начало недели для выбранной даты (для совместимости с существующей логикой)
   const weekStart = getMonday(new Date(selectedDate + 'T00:00:00'))
 
   function getMonday(date: Date): string {
@@ -72,7 +79,6 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
     return `${startStr} – ${endStr} ${year}`
   }
 
-  // загрузка преподавателей, кабинетов, учеников для фильтров
   useEffect(() => {
     loadFilters()
   }, [])
@@ -105,7 +111,6 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
       end.setDate(end.getDate() + 6)
       endDate = end.toISOString().split('T')[0]
     } else {
-      // month
       const d = new Date(selectedDate)
       d.setDate(1)
       startDate = d.toISOString().split('T')[0]
@@ -122,11 +127,9 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
       room:rooms!room_id(name)
     `).gte('lesson_date', startDate).lte('lesson_date', endDate).order('lesson_date').order('start_time')
 
-    // фильтры
     if (filterTeacherId) query = query.eq('teacher_id', filterTeacherId)
     if (filterRoomId) query = query.eq('room_id', filterRoomId)
     if (filterStudentId) {
-      // показываем индивидуальные уроки и групповые, если ученик в группе
       const groupsOfStudent = await supabase.from('group_students').select('group_id').eq('student_id', filterStudentId)
       const groupIdList = groupsOfStudent.data?.map((g: any) => g.group_id) || []
       if (groupIdList.length > 0) {
@@ -135,25 +138,14 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
         query = query.eq('student_id', filterStudentId)
       }
     } else if (studentId) {
-      // фильтр из пропсов (профиль ученика)
       const filters = [`student_id.eq.${studentId}`]
-      if (groupIds && groupIds.length > 0) {
-        filters.push(`group_id.in.(${groupIds.join(',')})`)
-      }
-      if (filters.length > 0) {
-        query = query.or(filters.join(','))
-      }
+      if (groupIds && groupIds.length > 0) filters.push(`group_id.in.(${groupIds.join(',')})`)
+      if (filters.length > 0) query = query.or(filters.join(','))
     }
 
     const { data, error } = await query
     if (!error && data) setLessons(data)
     setLoading(false)
-  }
-
-  function changeWeek(offset: number) {
-    const currentStart = new Date(weekStart)
-    currentStart.setDate(currentStart.getDate() + offset * 7)
-    setSelectedDate(getMonday(currentStart))
   }
 
   function navigate(offset: number) {
@@ -185,30 +177,61 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
 
   const handleDayClick = (dateStr: string) => {
     if (viewMode === 'month') {
-      // в месяце клик по дню переключает на день
       setSelectedDate(dateStr)
       setViewMode('day')
     } else if (onDayClick) {
       onDayClick(dateStr)
     } else {
-      setNewLessonDate(dateStr)
+      setNewLessonPrefill({
+        lesson_date: dateStr,
+        start_time: '',
+        end_time: '',
+        type: 'individual',
+        student_id: studentId || null,
+        group_id: null,
+        teacher_id: '',
+        online_link: '',
+        comment: '',
+        status: 'planned',
+        subject_id: null,
+        room_id: null,
+      })
+    }
+  }
+
+  const handleTimeSlotClick = (hour: number) => {
+    const startTime = `${hour.toString().padStart(2, '0')}:00`
+    const endTime = addMinutes(startTime, 50) // автоматическое окончание
+    if (onDayClick) {
+      onDayClick(selectedDate)
+    } else {
+      setNewLessonPrefill({
+        lesson_date: selectedDate,
+        start_time: startTime,
+        end_time: endTime,
+        type: 'individual',
+        student_id: studentId || null,
+        group_id: null,
+        teacher_id: '',
+        online_link: '',
+        comment: '',
+        status: 'planned',
+        subject_id: null,
+        room_id: null,
+      })
     }
   }
 
   const handleCloseNewLesson = () => {
-    setNewLessonDate(null)
+    setNewLessonPrefill(null)
   }
 
   const handleNewLessonSaved = () => {
-    setNewLessonDate(null)
+    setNewLessonPrefill(null)
     loadLessons()
   }
 
-  // === Отрисовка ===
-
   const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-
-  // группировка уроков
   const lessonsByDay: { [key: string]: CalendarLesson[] } = {}
   for (const l of lessons) {
     if (!lessonsByDay[l.lesson_date]) lessonsByDay[l.lesson_date] = []
@@ -242,7 +265,7 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
   }
 
   const renderDayView = () => {
-    const hours = Array.from({ length: 13 }, (_, i) => i + 8) // 8..20
+    const hours = Array.from({ length: 13 }, (_, i) => i + 8)
     const dayLessons = lessonsByDay[selectedDate] || []
 
     return (
@@ -255,7 +278,11 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
             const timeSlot = `${hour.toString().padStart(2, '0')}:00`
             const slotLessons = dayLessons.filter(l => l.start_time >= timeSlot && l.start_time < `${(hour+1).toString().padStart(2, '0')}:00`)
             return (
-              <div key={hour} className="border rounded p-2 min-h-[60px] flex">
+              <div
+                key={hour}
+                className="border rounded p-2 min-h-[60px] flex cursor-pointer hover:bg-gray-50"
+                onClick={() => handleTimeSlotClick(hour)}
+              >
                 <div className="w-12 text-sm text-gray-500">{timeSlot}</div>
                 <div className="flex-1 space-y-1">
                   {slotLessons.map(renderLessonCard)}
@@ -291,7 +318,7 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
     const year = new Date(selectedDate).getFullYear()
     const month = new Date(selectedDate).getMonth()
     const firstDay = new Date(year, month, 1)
-    const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1 // Пн=0
+    const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const weeks: (number | null)[][] = []
     let week: (number | null)[] = []
@@ -342,7 +369,6 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
 
   return (
     <div>
-      {/* Панель управления */}
       <div className="flex flex-wrap items-center gap-4 mb-4">
         <div className="flex items-center gap-1 bg-gray-100 rounded p-1">
           <button onClick={() => setViewMode('day')} className={`px-3 py-1 rounded ${viewMode === 'day' ? 'bg-white shadow' : ''}`}>День</button>
@@ -361,7 +387,6 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
 
         <button onClick={() => { setSelectedDate(new Date().toISOString().split('T')[0]); setViewMode('week') }} className="px-3 py-1 border rounded">Сегодня</button>
 
-        {/* Фильтры */}
         <div className="flex gap-2 ml-auto">
           <select value={filterTeacherId} onChange={e => setFilterTeacherId(e.target.value)} className="border rounded p-1 text-sm">
             <option value="">Все преподаватели</option>
@@ -397,26 +422,13 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
         />
       )}
 
-      {newLessonDate && (
+      {newLessonPrefill && (
         <LessonForm
           onClose={handleCloseNewLesson}
           onSaved={handleNewLessonSaved}
           lesson={null}
           role={role}
-          prefillData={{
-            lesson_date: newLessonDate,
-            start_time: '',
-            end_time: '',
-            type: 'individual',
-            student_id: studentId || null,
-            group_id: null,
-            teacher_id: '',
-            online_link: '',
-            comment: '',
-            status: 'planned',
-            subject_id: null,
-            room_id: null,
-          }}
+          prefillData={newLessonPrefill}
         />
       )}
     </div>

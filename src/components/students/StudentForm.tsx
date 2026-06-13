@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import { isValidEmail, isValidPhone } from '@/utils/validation'
 
 interface Student {
   id?: string
@@ -49,6 +50,7 @@ export default function StudentForm({
   )
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const supabase = createClient()
 
   useEffect(() => {
@@ -62,10 +64,46 @@ export default function StudentForm({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }))
+    }
+  }
+
+  const validateField = (name: string, value: string) => {
+    if (name === 'email' && value) {
+      if (!isValidEmail(value)) {
+        setErrors(prev => ({ ...prev, email: 'Некорректный email' }))
+        return false
+      }
+    }
+    if ((name === 'phone' || name === 'customer_contact') && value) {
+      if (!isValidPhone(value)) {
+        setErrors(prev => ({ ...prev, [name]: 'Некорректный номер телефона' }))
+        return false
+      }
+    }
+    setErrors(prev => ({ ...prev, [name]: '' }))
+    return true
+  }
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    validateField(name, value)
+  }
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+    if (form.email && !isValidEmail(form.email)) newErrors.email = 'Некорректный email'
+    if (form.phone && !isValidPhone(form.phone)) newErrors.phone = 'Некорректный номер телефона'
+    if (form.customer_contact && !isValidPhone(form.customer_contact)) newErrors.customer_contact = 'Некорректный номер телефона'
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateForm()) return
+
     setLoading(true)
 
     const dataToSave = { ...form }
@@ -82,6 +120,21 @@ export default function StudentForm({
     onSaved()
   }
 
+  const handleDelete = async () => {
+    if (!form.id) return
+    if (window.confirm('Вы уверены, что хотите удалить этого ученика?')) {
+      setLoading(true)
+      const { error } = await supabase.from('students').delete().eq('id', form.id)
+      if (error) {
+        alert(error.message)
+        setLoading(false)
+      } else {
+        setLoading(false)
+        onSaved()
+      }
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="bg-white p-6 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -94,11 +147,13 @@ export default function StudentForm({
             </div>
             <div>
               <label className="block text-sm">Телефон</label>
-              <input name="phone" value={form.phone} onChange={handleChange} className="w-full border p-2 rounded" />
+              <input name="phone" value={form.phone} onChange={handleChange} onBlur={handleBlur} className={`w-full border p-2 rounded ${errors.phone ? 'border-red-500' : ''}`} />
+              {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
             </div>
             <div>
               <label className="block text-sm">Email</label>
-              <input name="email" type="email" value={form.email} onChange={handleChange} className="w-full border p-2 rounded" />
+              <input name="email" type="email" value={form.email} onChange={handleChange} onBlur={handleBlur} className={`w-full border p-2 rounded ${errors.email ? 'border-red-500' : ''}`} />
+              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
             </div>
             <div>
               <label className="block text-sm">Предмет</label>
@@ -135,7 +190,8 @@ export default function StudentForm({
             </div>
             <div>
               <label className="block text-sm">Контакты заказчика</label>
-              <input name="customer_contact" value={form.customer_contact} onChange={handleChange} className="w-full border p-2 rounded" />
+              <input name="customer_contact" value={form.customer_contact} onChange={handleChange} onBlur={handleBlur} className={`w-full border p-2 rounded ${errors.customer_contact ? 'border-red-500' : ''}`} />
+              {errors.customer_contact && <p className="text-red-500 text-xs mt-1">{errors.customer_contact}</p>}
             </div>
             <div className="col-span-2">
               <label className="block text-sm">Ссылка на онлайн-урок</label>
@@ -146,11 +202,39 @@ export default function StudentForm({
               <textarea name="notes" value={form.notes} onChange={handleChange} className="w-full border p-2 rounded" rows={3} />
             </div>
           </div>
-          <div className="flex justify-end space-x-3 pt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 border rounded">Отмена</button>
-            <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">
-              {loading ? 'Сохранение...' : 'Сохранить'}
-            </button>
+          <div className="flex justify-between items-center pt-4">
+            {form.id && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 text-red-600 border border-red-600 rounded hover:bg-red-50 disabled:opacity-50"
+                title="Удалить ученика"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                </svg>
+                Удалить
+              </button>
+            )}
+            <div className="flex space-x-3">
+              <button type="button" onClick={onClose} className="px-4 py-2 border rounded">Отмена</button>
+              <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">
+                {loading ? 'Сохранение...' : 'Сохранить'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

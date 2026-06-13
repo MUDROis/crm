@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { isValidEmail } from '@/utils/validation'
 
 interface Teacher {
   id: string
@@ -27,26 +28,40 @@ export default function TeacherForm({
     status: teacher?.status || 'active',
   })
   const [loading, setLoading] = useState(false)
+  const [emailError, setEmailError] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
+    setForm(prev => ({ ...prev, [name]: value }))
+    if (name === 'email') setEmailError('')
+  }
+
+  const validateEmail = () => {
+    if (!form.email) {
+      setEmailError('Email обязателен')
+      return false
+    }
+    if (!isValidEmail(form.email)) {
+      setEmailError('Некорректный email')
+      return false
+    }
+    setEmailError('')
+    return true
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    if (!teacher?.id && !validateEmail()) return
 
+    setLoading(true)
     try {
       if (teacher?.id) {
-        // Редактирование существующего
         const res = await fetch(`/api/teachers/${teacher.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             full_name: form.full_name,
             color: form.color,
-            status: form.status,
             ...(form.password && { password: form.password }),
           }),
         })
@@ -56,7 +71,6 @@ export default function TeacherForm({
           return
         }
       } else {
-        // Создание нового
         const res = await fetch('/api/teachers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -65,7 +79,6 @@ export default function TeacherForm({
             password: form.password,
             full_name: form.full_name,
             color: form.color,
-            status: form.status,
           }),
         })
         if (!res.ok) {
@@ -83,8 +96,8 @@ export default function TeacherForm({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="bg-white p-6 rounded-lg w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-bold mb-4">
           {teacher ? 'Редактировать преподавателя' : 'Новый преподаватель'}
         </h2>
@@ -97,42 +110,27 @@ export default function TeacherForm({
                 name="email"
                 value={form.email}
                 onChange={handleChange}
+                onBlur={validateEmail}
                 required
-                className="w-full border p-2 rounded"
+                className={`w-full border p-2 rounded ${emailError ? 'border-red-500' : ''}`}
               />
+              {emailError && <p className="text-red-500 text-xs mt-1">{emailError}</p>}
             </div>
           )}
           <div>
             <label className="block text-sm">Полное имя</label>
-            <input
-              type="text"
-              name="full_name"
-              value={form.full_name}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-            />
+            <input type="text" name="full_name" value={form.full_name} onChange={handleChange} className="w-full border p-2 rounded" />
           </div>
           <div>
             <label className="block text-sm">Цвет индикатора</label>
             <div className="flex items-center gap-2">
-              <input
-                type="color"
-                name="color"
-                value={form.color}
-                onChange={handleChange}
-                className="h-8 w-12 border rounded cursor-pointer"
-              />
+              <input type="color" name="color" value={form.color} onChange={handleChange} className="h-8 w-12 border rounded cursor-pointer" />
               <span className="text-sm text-gray-600">{form.color}</span>
             </div>
           </div>
           <div>
             <label className="block text-sm">Статус</label>
-            <select
-              name="status"
-              value={form.status}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-            >
+            <select name="status" value={form.status} onChange={handleChange} className="w-full border p-2 rounded">
               <option value="active">Активный</option>
               <option value="archived">Архивный</option>
             </select>
@@ -151,14 +149,8 @@ export default function TeacherForm({
             />
           </div>
           <div className="flex justify-end space-x-3 pt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 border rounded">
-              Отмена
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-            >
+            <button type="button" onClick={onClose} className="px-4 py-2 border rounded">Отмена</button>
+            <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">
               {loading ? 'Сохранение...' : 'Сохранить'}
             </button>
           </div>

@@ -14,7 +14,7 @@ export default function StudentCommentsTab({ studentId }: { studentId: string })
 
     let query = supabase
       .from('lessons')
-      .select('lesson_date, comment, teacher:profiles!teacher_id(full_name), type')
+      .select('lesson_date, comment, profiles!teacher_id(full_name), type')
       .eq('status', 'completed')
       .not('comment', 'is', null)
       .order('lesson_date', { ascending: false })
@@ -41,7 +41,7 @@ export default function StudentCommentsTab({ studentId }: { studentId: string })
       {comments.map((c: any, idx: number) => (
         <div key={idx} className="border-b pb-2">
           <div className="text-sm text-gray-500">
-            {c.lesson_date} · {c.teacher?.full_name || 'Неизвестный преподаватель'}
+            {c.lesson_date} · {c.profiles?.full_name || 'Неизвестный преподаватель'}
           </div>
           <p className="mt-1 whitespace-pre-wrap">{c.comment}</p>
         </div>
