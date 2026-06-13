@@ -7,6 +7,7 @@ interface Teacher {
   email: string
   full_name: string
   color?: string | null
+  status?: string
 }
 
 export default function TeacherForm({
@@ -22,11 +23,12 @@ export default function TeacherForm({
     email: teacher?.email || '',
     full_name: teacher?.full_name || '',
     password: '',
-    color: teacher?.color || '#3B82F6', // синий по умолчанию
+    color: teacher?.color || '#3B82F6',
+    status: teacher?.status || 'active',
   })
   const [loading, setLoading] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
   }
@@ -44,6 +46,7 @@ export default function TeacherForm({
           body: JSON.stringify({
             full_name: form.full_name,
             color: form.color,
+            status: form.status,
             ...(form.password && { password: form.password }),
           }),
         })
@@ -62,6 +65,7 @@ export default function TeacherForm({
             password: form.password,
             full_name: form.full_name,
             color: form.color,
+            status: form.status,
           }),
         })
         if (!res.ok) {
@@ -120,6 +124,18 @@ export default function TeacherForm({
               />
               <span className="text-sm text-gray-600">{form.color}</span>
             </div>
+          </div>
+          <div>
+            <label className="block text-sm">Статус</label>
+            <select
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              className="w-full border p-2 rounded"
+            >
+              <option value="active">Активный</option>
+              <option value="archived">Архивный</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm">

@@ -2,17 +2,21 @@
 
 import { useState } from 'react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { createClient } from '@/utils/supabase/client'
 
 export default function SubscriptionsTab() {
   const [showForm, setShowForm] = useState(false)
   const [editingSub, setEditingSub] = useState<any>(null)
   const [form, setForm] = useState({ student_id: '', total_lessons: 0, remaining_lessons: 0, valid_until: '' })
+  const [filterStatus, setFilterStatus] = useState<'active' | 'archived' | 'all'>('active')
+  const supabase = createClient()
 
-  const { data: subscriptions, loading, refetch, supabase } = useSupabaseQuery('subscriptions-list', async (supabase) => {
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .select('*, students(full_name)')
-      .order('created_at', { ascending: false })
+  const queryKey = `subscriptions-${filterStatus}`
+  const { data: subscriptions, loading, refetch } = useSupabaseQuery(queryKey, async (supabase) => {
+    let query = supabase.from('subscriptions').select('*, students(full_name)').order('created_at', { ascending: false })
+    if (filterStatus === 'active') query = query.eq('status', 'active')
+    else if (filterStatus === 'archived') query = query.eq('status', 'archived')
+    const { data, error } = await query
     if (error) throw error
     return data || []
   })
@@ -34,7 +38,7 @@ export default function SubscriptionsTab() {
       student_id: sub.student_id,
       total_lessons: sub.total_lessons,
       remaining_lessons: sub.remaining_lessons,
-      valid_until: sub.valid_until,
+      valid_until: sub.valid_until || '',
     })
     setShowForm(true)
   }
@@ -44,17 +48,28 @@ export default function SubscriptionsTab() {
     if (editingSub) {
       await supabase.from('subscriptions').update(form).eq('id', editingSub.id)
     } else {
-      await supabase.from('subscriptions').insert(form)
+      await supabase.from('subscriptions').insert({ ...form, status: 'active' })
     }
     setShowForm(false)
     refetch()
   }
 
+  const handleArchive = async (id: string) => {
+    if (!confirm('Переместить абонемент в архив?')) return
+    await supabase.from('subscriptions').update({ status: 'archived' }).eq('id', id)
+    refetch()
+  }
+
+  const handleRestore = async (id: string) => {
+    if (!confirm('Восстановить абонемент?')) return
+    await supabase.from('subscriptions').update({ status: 'active' }).eq('id', id)
+    refetch()
+  }
+
   const handleDelete = async (id: string) => {
-    if (confirm('Удалить абонемент?')) {
-      await supabase.from('subscriptions').delete().eq('id', id)
-      refetch()
-    }
+    if (!confirm('Удалить абонемент навсегда?')) return
+    await supabase.from('subscriptions').delete().eq('id', id)
+    refetch()
   }
 
   if (loading) return <p>Загрузка...</p>
@@ -65,6 +80,13 @@ export default function SubscriptionsTab() {
         <h2 className="text-xl font-semibold">Абонементы</h2>
         <button onClick={handleAdd} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">+ Добавить</button>
       </div>
+
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setFilterStatus('active')} className={`px-3 py-2 rounded ${filterStatus === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Активные</button>
+        <button onClick={() => setFilterStatus('archived')} className={`px-3 py-2 rounded ${filterStatus === 'archived' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Архив</button>
+        <button onClick={() => setFilterStatus('all')} className={`px-3 py-2 rounded ${filterStatus === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Все</button>
+      </div>
+
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-gray-100">
@@ -81,18 +103,24 @@ export default function SubscriptionsTab() {
               <td className="border p-2">{s.students?.full_name || '-'}</td>
               <td className="border p-2">{s.total_lessons}</td>
               <td className="border p-2">{s.remaining_lessons}</td>
-              <td className="border p-2">{s.valid_until}</td>
+              <td className="border p-2">{s.valid_until || '—'}</td>
               <td className="border p-2 space-x-2">
                 <button onClick={() => handleEdit(s)} className="text-blue-600 hover:underline">Ред.</button>
-                <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:underline">Удал.</button>
+                {s.status === 'archived' ? (
+                  <button onClick={() => handleRestore(s.id)} className="text-green-600 hover:underline">Восстановить</button>
+                ) : (
+                  <button onClick={() => handleArchive(s.id)} className="text-red-600 hover:underline">В архив</button>
+                )}
+                <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:underline">Удалить</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setShowForm(false)}>
+          <div className="bg-white p-6 rounded-lg w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold mb-4">{editingSub ? 'Редактировать абонемент' : 'Новый абонемент'}</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
