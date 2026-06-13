@@ -27,7 +27,14 @@ interface CalendarLesson {
   room_id?: string | null
 }
 
-export default function LessonCalendar({ role }: { role: string }) {
+interface Props {
+  role: string
+  studentId?: string
+  groupIds?: string[]
+  onDayClick?: (dateStr: string) => void
+}
+
+export default function LessonCalendar({ role, studentId, groupIds, onDayClick }: Props) {
   const [lessons, setLessons] = useState<CalendarLesson[]>([])
   const [weekStart, setWeekStart] = useState(getMonday(new Date()))
   const [loading, setLoading] = useState(true)
@@ -57,7 +64,7 @@ export default function LessonCalendar({ role }: { role: string }) {
 
   useEffect(() => {
     loadLessons()
-  }, [weekStart])
+  }, [weekStart, studentId, groupIds])
 
   async function loadLessons() {
     setLoading(true)
@@ -73,6 +80,17 @@ export default function LessonCalendar({ role }: { role: string }) {
       subject:subjects!subject_id(name),
       room:rooms!room_id(name)
     `).gte('lesson_date', weekStart).lte('lesson_date', endStr).order('lesson_date').order('start_time')
+
+    // Фильтр по ученику
+    if (studentId) {
+      const filters = [`student_id.eq.${studentId}`]
+      if (groupIds && groupIds.length > 0) {
+        filters.push(`group_id.in.(${groupIds.join(',')})`)
+      }
+      if (filters.length > 0) {
+        query = query.or(filters.join(','))
+      }
+    }
 
     const { data, error } = await query
     if (!error && data) setLessons(data)
@@ -99,7 +117,11 @@ export default function LessonCalendar({ role }: { role: string }) {
   }
 
   const handleDayClick = (dateStr: string) => {
-    setNewLessonDate(dateStr)
+    if (onDayClick) {
+      onDayClick(dateStr)
+    } else {
+      setNewLessonDate(dateStr)
+    }
   }
 
   const handleCloseNewLesson = () => {
@@ -194,7 +216,7 @@ export default function LessonCalendar({ role }: { role: string }) {
             start_time: '',
             end_time: '',
             type: 'individual',
-            student_id: null,
+            student_id: studentId || null,
             group_id: null,
             teacher_id: '',
             online_link: '',

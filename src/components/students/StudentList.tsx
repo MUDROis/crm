@@ -1,17 +1,28 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
+import Link from 'next/link'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { createClient } from '@/utils/supabase/client'
-import StudentInfoModal from './StudentInfoModal'
 
-export default function StudentList({ onEdit, refreshKey }: { onEdit: (student: any) => void, refreshKey: number }) {
+interface Student {
+  id: string
+  full_name: string
+  phone: string
+  email: string
+  subject: string
+  teacher_id: string
+  type: string
+  customer_name: string
+  teacher: { full_name: string } | null
+}
+
+export default function StudentList({ onEdit }: { onEdit: (student: any) => void }) {
   const [search, setSearch] = useState('')
   const [filterTeacher, setFilterTeacher] = useState('')
   const [filterSubject, setFilterSubject] = useState('')
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
 
-  // Мемоизируем функцию-загрузчик, чтобы она не пересоздавалась (не обязательно после правки хука, но хорошо)
+  // Мемоизируем fetcher'ы для стабильности ссылок
   const fetchTeachers = useCallback(async (supabase: ReturnType<typeof createClient>) => {
     const { data } = await supabase.from('profiles').select('id, full_name').eq('role', 'teacher')
     return data || []
@@ -31,11 +42,6 @@ export default function StudentList({ onEdit, refreshKey }: { onEdit: (student: 
   const filterKey = `students-${search}-${filterTeacher}-${filterSubject}`
   const { data: students, loading, refetch } = useSupabaseQuery(filterKey, fetchStudents)
 
-  // Вызываем refetch при изменении refreshKey
-  useEffect(() => {
-    refetch()
-  }, [refreshKey, refetch])
-
   const handleDelete = async (id: string) => {
     if (!confirm('Удалить ученика?')) return
     const supabase = createClient()
@@ -44,7 +50,7 @@ export default function StudentList({ onEdit, refreshKey }: { onEdit: (student: 
       alert('Ошибка при удалении: ' + error.message)
       return
     }
-    refetch() // обновляем список без перезагрузки страницы
+    refetch()
   }
 
   if (loading && !students) {
@@ -54,15 +60,26 @@ export default function StudentList({ onEdit, refreshKey }: { onEdit: (student: 
   return (
     <div>
       <div className="flex gap-4 mb-4">
-        <input placeholder="Поиск по ФИО" value={search} onChange={e => setSearch(e.target.value)} className="border p-2 rounded flex-1" />
+        <input
+          placeholder="Поиск по ФИО"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="border p-2 rounded flex-1"
+        />
         <select value={filterTeacher} onChange={e => setFilterTeacher(e.target.value)} className="border p-2 rounded">
           <option value="">Все преподаватели</option>
           {teachers?.map((t: any) => (
             <option key={t.id} value={t.id}>{t.full_name || t.id}</option>
           ))}
         </select>
-        <input placeholder="Предмет" value={filterSubject} onChange={e => setFilterSubject(e.target.value)} className="border p-2 rounded" />
+        <input
+          placeholder="Предмет"
+          value={filterSubject}
+          onChange={e => setFilterSubject(e.target.value)}
+          className="border p-2 rounded"
+        />
       </div>
+
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-gray-100">
@@ -77,23 +94,23 @@ export default function StudentList({ onEdit, refreshKey }: { onEdit: (student: 
         <tbody>
           {students?.map((s: any) => (
             <tr key={s.id}>
-              <td className="border p-2">{s.full_name}</td>
+              <td className="border p-2">
+                <Link href={`/admin/students/${s.id}`} className="text-blue-600 hover:underline">
+                  {s.full_name}
+                </Link>
+              </td>
               <td className="border p-2">{s.subject}</td>
               <td className="border p-2">{s.teacher?.full_name || '-'}</td>
               <td className="border p-2">{s.type === 'individual' ? 'Инд.' : 'Групп.'}</td>
               <td className="border p-2">{s.customer_name}</td>
               <td className="border p-2 space-x-2">
                 <button onClick={() => onEdit(s)} className="text-blue-600 hover:underline">Ред.</button>
-                <button onClick={() => setSelectedStudentId(s.id)} className="text-green-600 hover:underline">Подробнее</button>
                 <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:underline">Удал.</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      {selectedStudentId && (
-        <StudentInfoModal studentId={selectedStudentId} onClose={() => setSelectedStudentId(null)} />
-      )}
     </div>
   )
 }
