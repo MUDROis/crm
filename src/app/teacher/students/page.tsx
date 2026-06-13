@@ -21,6 +21,7 @@ export default function TeacherStudentsPage() {
       .from('students')
       .select('*, full_name')
       .eq('teacher_id', user.id)
+      .eq('status', 'active')
       .order('full_name')
 
     if (!error && data) setStudents(data)
