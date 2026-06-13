@@ -15,9 +15,9 @@ export async function PATCH(
     const { id } = await params
     const body = await request.json()
 
-    // Обновление профиля преподавателя
     const updates: any = {}
     if (body.full_name !== undefined) updates.full_name = body.full_name
+    if (body.color !== undefined) updates.color = body.color
 
     if (Object.keys(updates).length > 0) {
       const { error } = await supabaseAdmin
@@ -30,7 +30,6 @@ export async function PATCH(
       }
     }
 
-    // Если передан новый пароль, сбрасываем его
     if (body.password) {
       const { error } = await supabaseAdmin.auth.admin.updateUserById(id, {
         password: body.password,

@@ -15,7 +15,7 @@ interface CalendarLesson {
   comment: string
   student: { full_name: string } | null
   group: { name: string } | null
-  teacher: { full_name: string } | null
+  teacher: { full_name: string; color: string | null } | null
   subject: { name: string } | null
   room: { name: string } | null
   original_lesson_id?: string | null
@@ -67,7 +67,7 @@ export default function LessonCalendar({ role }: { role: string }) {
       *,
       student:students!student_id(full_name),
       group:groups!group_id(name),
-      teacher:profiles!teacher_id(full_name),
+      teacher:profiles!teacher_id(full_name, color),
       subject:subjects!subject_id(name),
       room:rooms!room_id(name)
     `).gte('lesson_date', weekStart).lte('lesson_date', endStr).order('lesson_date').order('start_time')
@@ -123,22 +123,31 @@ export default function LessonCalendar({ role }: { role: string }) {
             return (
               <div key={idx} className="border rounded p-2 min-h-[120px]">
                 <div className="font-semibold text-sm">{day} {date.getDate()}</div>
-                {lessonsByDay[dateStr]?.map(lesson => (
-                  <div
-                    key={lesson.id}
-                    onClick={() => handleLessonClick(lesson)}
-                    className={`mt-1 p-1 rounded text-xs cursor-pointer ${
-                      lesson.status === 'completed' ? 'bg-green-100' :
-                      lesson.status === 'cancelled' || lesson.status === 'postponed' ? 'bg-red-100' :
-                      'bg-blue-100'
-                    }`}
-                  >
-                    <div className="font-medium">{lesson.start_time?.slice(0, 5)}-{lesson.end_time?.slice(0, 5)}</div>
-                    <div>{lesson.student?.full_name || lesson.group?.name || '—'}</div>
-                    {lesson.subject && <div className="text-gray-500">{lesson.subject.name}</div>}
-                    {lesson.room && <div className="text-gray-500">каб. {lesson.room.name}</div>}
-                  </div>
-                ))}
+                {lessonsByDay[dateStr]?.map(lesson => {
+                  const teacherColor = lesson.teacher?.color || '#3B82F6'
+                  return (
+                    <div
+                      key={lesson.id}
+                      onClick={() => handleLessonClick(lesson)}
+                      className={`mt-1 p-1 rounded text-xs cursor-pointer border-l border-r border-t border-b-2 ${
+                        lesson.status === 'completed' ? 'bg-green-100' :
+                        lesson.status === 'cancelled' || lesson.status === 'postponed' ? 'bg-red-100' :
+                        'bg-blue-100'
+                      }`}
+                      style={{
+                        borderLeftColor: teacherColor,
+                        borderRightColor: teacherColor,
+                        borderTopColor: teacherColor,
+                        borderBottomColor: teacherColor,
+                      }}
+                    >
+                      <div className="font-medium">{lesson.start_time?.slice(0, 5)}-{lesson.end_time?.slice(0, 5)}</div>
+                      <div>{lesson.student?.full_name || lesson.group?.name || '—'}</div>
+                      {lesson.subject && <div className="text-gray-500">{lesson.subject.name}</div>}
+                      {lesson.room && <div className="text-gray-500">каб. {lesson.room.name}</div>}
+                    </div>
+                  )
+                })}
               </div>
             )
           })}

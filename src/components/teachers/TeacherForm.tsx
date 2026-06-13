@@ -6,6 +6,7 @@ interface Teacher {
   id: string
   email: string
   full_name: string
+  color?: string | null
 }
 
 export default function TeacherForm({
@@ -21,6 +22,7 @@ export default function TeacherForm({
     email: teacher?.email || '',
     full_name: teacher?.full_name || '',
     password: '',
+    color: teacher?.color || '#3B82F6', // синий по умолчанию
   })
   const [loading, setLoading] = useState(false)
 
@@ -41,6 +43,7 @@ export default function TeacherForm({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             full_name: form.full_name,
+            color: form.color,
             ...(form.password && { password: form.password }),
           }),
         })
@@ -58,6 +61,7 @@ export default function TeacherForm({
             email: form.email,
             password: form.password,
             full_name: form.full_name,
+            color: form.color,
           }),
         })
         if (!res.ok) {
@@ -103,6 +107,19 @@ export default function TeacherForm({
               onChange={handleChange}
               className="w-full border p-2 rounded"
             />
+          </div>
+          <div>
+            <label className="block text-sm">Цвет индикатора</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                name="color"
+                value={form.color}
+                onChange={handleChange}
+                className="h-8 w-12 border rounded cursor-pointer"
+              />
+              <span className="text-sm text-gray-600">{form.color}</span>
+            </div>
           </div>
           <div>
             <label className="block text-sm">
