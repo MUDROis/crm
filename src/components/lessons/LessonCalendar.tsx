@@ -31,6 +31,7 @@ interface Props {
   role: string
   studentId?: string
   groupIds?: string[]
+  groupId?: string
   teacherId?: string
   onDayClick?: (dateStr: string) => void
 }
@@ -43,7 +44,7 @@ function addMinutes(time: string, minutes: number): string {
   return date.toTimeString().slice(0, 5)
 }
 
-export default function LessonCalendar({ role, studentId, groupIds, teacherId, onDayClick }: Props) {
+export default function LessonCalendar({ role, studentId, groupIds, groupId, teacherId, onDayClick }: Props) {
   const [lessons, setLessons] = useState<CalendarLesson[]>([])
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week')
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
@@ -143,6 +144,8 @@ export default function LessonCalendar({ role, studentId, groupIds, teacherId, o
       const filters = [`student_id.eq.${studentId}`]
       if (groupIds && groupIds.length > 0) filters.push(`group_id.in.(${groupIds.join(',')})`)
       if (filters.length > 0) query = query.or(filters.join(','))
+    } else if (groupId) {
+      query = query.eq('group_id', groupId)
     }
 
     const { data, error } = await query

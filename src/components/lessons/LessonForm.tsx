@@ -417,6 +417,10 @@ export default function LessonForm({
               <input type="url" name="online_link" value={form.online_link} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://..." />
             </div>
             <div className="col-span-2">
+              <label className="block text-sm">Комментарий</label>
+              <textarea name="comment" value={form.comment} onChange={handleChange} className="w-full border p-2 rounded" rows={3} placeholder="Комментарий к уроку..." />
+            </div>
+            <div className="col-span-2">
               <label className="block text-sm">Статус</label>
               <select name="status" value={form.status} onChange={handleChange} className="w-full border p-2 rounded">
                 <option value="planned">Запланирован</option>

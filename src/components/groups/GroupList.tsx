@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { createClient } from '@/utils/supabase/client'
-import Link from 'next/link'
 
 export default function GroupList({ onEdit }: { onEdit: (group: any) => void }) {
+  const router = useRouter()
   const [filterStatus, setFilterStatus] = useState<'active' | 'archived' | 'all'>('active')
   const supabase = createClient()
 
@@ -31,12 +32,6 @@ export default function GroupList({ onEdit }: { onEdit: (group: any) => void }) 
     refetch()
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Удалить группу навсегда?')) return
-    await supabase.from('groups').delete().eq('id', id)
-    refetch()
-  }
-
   if (loading) return <p>Загрузка...</p>
 
   return (
@@ -59,18 +54,15 @@ export default function GroupList({ onEdit }: { onEdit: (group: any) => void }) 
         <tbody>
           {groups?.map((g: any) => (
             <tr key={g.id}>
-              <td className="border p-2">{g.name}</td>
+              <td className="border p-2"><button onClick={() => router.push(`/admin/groups/${g.id}`)} className="text-blue-600 hover:underline text-left">{g.name}</button></td>
               <td className="border p-2">{g.subject}</td>
               <td className="border p-2">{g.teacher?.full_name || '-'}</td>
               <td className="border p-2 space-x-2">
-                <button onClick={() => onEdit(g)} className="text-blue-600 hover:underline">Ред.</button>
                 {g.status === 'archived' ? (
                   <button onClick={() => handleRestore(g.id)} className="text-green-600 hover:underline">Восстановить</button>
                 ) : (
                   <button onClick={() => handleArchive(g.id)} className="text-red-600 hover:underline">В архив</button>
                 )}
-                <button onClick={() => handleDelete(g.id)} className="text-red-600 hover:underline">Удалить</button>
-                <Link href={`/admin/groups/${g.id}/students`} className="text-blue-600 hover:underline">Ученики</Link>
               </td>
             </tr>
           ))}
