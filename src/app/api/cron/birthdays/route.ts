@@ -72,22 +72,26 @@ export async function GET(request: Request) {
 
   const { data: existingNotifs } = await supabaseAdmin
     .from('notifications')
-    .select('id')
+    .select('body')
     .eq('type', 'birthday')
     .gte('created_at', todayStart.toISOString())
     .lte('created_at', todayEnd.toISOString())
 
-  if (existingNotifs && existingNotifs.length > 0) {
-    return NextResponse.json({ inserted: 0, skipped: 'already sent today' })
-  }
+  const existingBodies = new Set(existingNotifs?.map(n => n.body) || [])
 
   let inserted = 0
   for (const person of birthdayPeople) {
+    const body = person.type === 'student' 
+      ? `У ученика ${person.name} сегодня день рождения`
+      : `У преподавателя ${person.name} сегодня день рождения`
+    
+    if (existingBodies.has(body)) continue
+
     for (const adminId of adminIds) {
       const { error } = await supabaseAdmin.from('notifications').insert({
         user_id: adminId,
         title: `🎂 День рождения: ${person.name}`,
-        body: person.type === 'student' ? 'У ученика сегодня день рождения' : 'У преподавателя сегодня день рождения',
+        body,
         type: 'birthday',
         link: person.link,
       })

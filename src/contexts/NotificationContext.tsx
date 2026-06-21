@@ -41,7 +41,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
   const [userId, setUserId] = useState<string | null>(null)
   const supabase = useMemo(() => createClient(), [])
-  const toastsRef = useRef<Toast[]>([])
+  const timerRef = useRef<NodeJS.Timeout[]>([])
 
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id))
@@ -66,6 +66,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       .then(({ data }: { data: Notification[] | null }) => {
         if (data) setNotifications(data)
       })
+      .catch(console.error)
   }, [userId, supabase])
 
   // Realtime subscription
@@ -95,18 +96,20 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           }
           setToasts((prev) => {
             const next = [newToast, ...prev].slice(0, 3)
-            toastsRef.current = next
             return next
           })
 
-          setTimeout(() => {
+          const timer = setTimeout(() => {
             dismissToast(newNotification.id)
           }, 5000)
+          timerRef.current.push(timer)
         }
       )
       .subscribe()
 
     return () => {
+      timerRef.current.forEach(clearTimeout)
+      timerRef.current = []
       supabase.removeChannel(channel)
     }
   }, [userId, supabase, dismissToast])
