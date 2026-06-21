@@ -1,0 +1,318 @@
+# Review package: 4eb36dc..0bca8e5
+
+## Commits
+0bca8e5 feat: add birth_date field to student and teacher forms
+
+## Files changed
+ src/app/admin/teachers/page.tsx         | 3 ++-
+ src/app/api/teachers/[id]/route.ts      | 1 +
+ src/app/api/teachers/route.ts           | 3 ++-
+ src/components/students/StudentForm.tsx | 6 ++++++
+ src/components/teachers/TeacherForm.tsx | 8 ++++++++
+ 5 files changed, 19 insertions(+), 2 deletions(-)
+
+## Diff
+diff --git a/src/app/admin/teachers/page.tsx b/src/app/admin/teachers/page.tsx
+index c792131..d0d3160 100644
+--- a/src/app/admin/teachers/page.tsx
++++ b/src/app/admin/teachers/page.tsx
+@@ -4,38 +4,39 @@ import { useState, useEffect } from 'react'
+ import { useRouter } from 'next/navigation'
+ import { createClient } from '@/utils/supabase/client'
+ import { useSort } from '@/hooks/useSort'
+ import TeacherForm from '@/components/teachers/TeacherForm'
+ 
+ interface Teacher {
+   id: string
+   email: string
+   full_name: string
+   status: string
++  birth_date?: string | null
+ }
+ 
+ export default function TeachersPage() {
+   const router = useRouter()
+   const [teachers, setTeachers] = useState<Teacher[]>([])
+   const [loading, setLoading] = useState(true)
+   const [showForm, setShowForm] = useState(false)
+   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null)
+   const [filterStatus, setFilterStatus] = useState<'active' | 'archived' | 'all'>('active')
+   const supabase = createClient()
+ 
+   useEffect(() => {
+     loadTeachers()
+   }, [filterStatus])
+ 
+   async function loadTeachers() {
+     setLoading(true)
+-    let query = supabase.from('profiles').select('id, email, full_name, status').eq('role', 'teacher')
++    let query = supabase.from('profiles').select('id, email, full_name, status, birth_date').eq('role', 'teacher')
+     if (filterStatus === 'active') query = query.eq('status', 'active')
+     else if (filterStatus === 'archived') query = query.eq('status', 'archived')
+     const { data, error } = await query.order('full_name')
+     if (!error && data) setTeachers(data)
+     setLoading(false)
+   }
+   const { sorted: sortedTeachers, sortKey, sortAsc, toggleSort } = useSort(teachers, 'full_name')
+ 
+   const handleAdd = () => {
+     setEditingTeacher(null)
+diff --git a/src/app/api/teachers/[id]/route.ts b/src/app/api/teachers/[id]/route.ts
+index 1232b25..8e677f0 100644
+--- a/src/app/api/teachers/[id]/route.ts
++++ b/src/app/api/teachers/[id]/route.ts
+@@ -12,20 +12,21 @@ export async function PATCH(
+   { params }: { params: Promise<{ id: string }> }
+ ) {
+   try {
+     const { id } = await params
+     const body = await request.json()
+ 
+     const updates: any = {}
+     if (body.full_name !== undefined) updates.full_name = body.full_name
+     if (body.phone !== undefined) updates.phone = body.phone
+     if (body.color !== undefined) updates.color = body.color
++    if (body.birth_date !== undefined) updates.birth_date = body.birth_date
+ 
+     if (Object.keys(updates).length > 0) {
+       const { error } = await supabaseAdmin
+         .from('profiles')
+         .update(updates)
+         .eq('id', id)
+ 
+       if (error) {
+         return NextResponse.json({ error: error.message }, { status: 500 })
+       }
+diff --git a/src/app/api/teachers/route.ts b/src/app/api/teachers/route.ts
+index fa4c99f..c368687 100644
+--- a/src/app/api/teachers/route.ts
++++ b/src/app/api/teachers/route.ts
+@@ -3,21 +3,21 @@ import { createClient } from '@supabase/supabase-js'
+ 
+ const supabaseAdmin = createClient(
+   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+   process.env.SUPABASE_SERVICE_ROLE_KEY!,
+   { auth: { autoRefreshToken: false, persistSession: false } }
+ )
+ 
+ export async function POST(request: NextRequest) {
+   try {
+     const body = await request.json()
+-    const { email, password, full_name, phone, color } = body
++    const { email, password, full_name, phone, color, birth_date } = body
+ 
+     if (!email || !password) {
+       return NextResponse.json({ error: 'Email ¦¬ ¦¬¦-TÀ¦-¦¬TÌ ¦-¦-TÏ¦¬¦-TÂ¦¦¦¬TÌ¦-TË' }, { status: 400 })
+     }
+ 
+     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+       email,
+       password,
+       email_confirm: true,
+       app_metadata: { role: 'teacher' },
+@@ -32,20 +32,21 @@ export async function POST(request: NextRequest) {
+       return NextResponse.json({ error: '¦Ý¦¦ TÃ¦+¦-¦¬¦-TÁTÌ TÁ¦-¦¬¦+¦-TÂTÌ ¦¬¦-¦¬TÌ¦¬¦-¦-¦-TÂ¦¦¦¬TÏ' }, { status: 500 })
+     }
+ 
+     const { error: profileError } = await supabaseAdmin
+       .from('profiles')
+       .update({
+         role: 'teacher',
+         full_name: full_name || null,
+         phone: phone || null,
+         color: color || null,
++        birth_date: birth_date || null,
+       })
+       .eq('id', userId)
+ 
+     if (profileError) {
+       return NextResponse.json({ error: profileError.message }, { status: 500 })
+     }
+ 
+     return NextResponse.json({ success: true, id: userId })
+   } catch (err: any) {
+     return NextResponse.json({ error: err.message }, { status: 500 })
+diff --git a/src/components/students/StudentForm.tsx b/src/components/students/StudentForm.tsx
+index 519290e..968a489 100644
+--- a/src/components/students/StudentForm.tsx
++++ b/src/components/students/StudentForm.tsx
+@@ -11,20 +11,21 @@ interface Student {
+   phone: string
+   email: string
+   subject: string
+   teacher_id: string | null
+   type: 'individual' | 'group'
+   customer_name: string
+   customer_contact: string
+   notes: string
+   online_link: string
+   status: string
++  birth_date: string
+ }
+ 
+ interface Teacher {
+   id: string
+   full_name: string
+ }
+ 
+ export default function StudentForm({
+   onClose,
+   onSaved,
+@@ -40,20 +41,21 @@ export default function StudentForm({
+       phone: '',
+       email: '',
+       subject: '',
+       teacher_id: null,
+       type: 'individual',
+       customer_name: '',
+       customer_contact: '',
+       notes: '',
+       online_link: '',
+       status: 'active',
++      birth_date: '',
+     }
+   )
+   const [teachers, setTeachers] = useState<Teacher[]>([])
+   const [loading, setLoading] = useState(false)
+   const [errors, setErrors] = useState<Record<string, string>>({})
+   const supabase = createClient()
+ 
+   useEffect(() => {
+     async function loadTeachers() {
+       const { data } = await supabase.from('profiles').select('id, full_name').eq('role', 'teacher')
+@@ -137,20 +139,24 @@ export default function StudentForm({
+   }
+ 
+   return (
+     <Modal isOpen onClose={onClose} title={form.id ? '¦à¦¦¦+¦-¦¦TÂ¦¬TÀ¦-¦-¦-TÂTÌ TÃTÇ¦¦¦-¦¬¦¦¦-' : '¦Ý¦-¦-TË¦¦ TÃTÇ¦¦¦-¦¬¦¦'} maxWidth="2xl">
+         <form onSubmit={handleSubmit} className="space-y-3">
+           <div className="grid grid-cols-2 gap-4">
+             <div>
+               <label className="block text-sm">¦ä¦Ø¦Þ *</label>
+               <input name="full_name" value={form.full_name} onChange={handleChange} required className="w-full border p-2 rounded" />
+             </div>
++            <div>
++              <label className="block text-sm">¦Ô¦-TÂ¦- TÀ¦-¦¦¦+¦¦¦-¦¬TÏ</label>
++              <input type="date" name="birth_date" value={form.birth_date} onChange={handleChange} className="w-full border p-2 rounded" />
++            </div>
+             <div>
+               <label className="block text-sm font-medium text-gray-700">¦â¦¦¦¬¦¦TÄ¦-¦-</label>
+               <div className="relative">
+                 <input
+                   name="phone"
+                   value={form.phone}
+                   onChange={handleChange}
+                   onBlur={handleBlur}
+                   className={`w-full border p-2 rounded-lg ${errors.phone ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-brand-500'}`}
+                 />
+diff --git a/src/components/teachers/TeacherForm.tsx b/src/components/teachers/TeacherForm.tsx
+index b1b86cb..9bc9ab7 100644
+--- a/src/components/teachers/TeacherForm.tsx
++++ b/src/components/teachers/TeacherForm.tsx
+@@ -4,38 +4,40 @@ import { useState } from 'react'
+ import { isValidEmail, isValidPhone } from '@/utils/validation'
+ import Modal from '@/components/ui/Modal'
+ 
+ interface Teacher {
+   id: string
+   email: string
+   full_name: string
+   phone?: string | null
+   color?: string | null
+   status?: string
++  birth_date?: string | null
+ }
+ 
+ export default function TeacherForm({
+   onClose,
+   onSaved,
+   teacher,
+ }: {
+   onClose: () => void
+   onSaved: () => void
+   teacher?: Teacher | null
+ }) {
+   const [form, setForm] = useState({
+     email: teacher?.email || '',
+     full_name: teacher?.full_name || '',
+     phone: teacher?.phone || '',
+     password: '',
+     color: teacher?.color || '#3B82F6',
+     status: teacher?.status || 'active',
++    birth_date: teacher?.birth_date || '',
+   })
+   const [loading, setLoading] = useState(false)
+   const [emailError, setEmailError] = useState('')
+   const [phoneError, setPhoneError] = useState('')
+ 
+   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+     const { name, value } = e.target
+     setForm(prev => ({ ...prev, [name]: value }))
+     if (name === 'email') setEmailError('')
+     if (name === 'phone') setPhoneError('')
+@@ -61,38 +63,40 @@ export default function TeacherForm({
+     setLoading(true)
+     try {
+       if (teacher?.id) {
+         const res = await fetch(`/api/teachers/${teacher.id}`, {
+           method: 'PATCH',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+             full_name: form.full_name,
+             phone: form.phone || null,
+             color: form.color,
++            birth_date: form.birth_date || null,
+             ...(form.password && { password: form.password }),
+           }),
+         })
+         if (!res.ok) {
+           const data = await res.json()
+           alert(data.error || '¦ÞTÈ¦¬¦-¦¦¦- ¦¬TÀ¦¬ TÁ¦-TÅTÀ¦-¦-¦¦¦-¦¬¦¬')
+           return
+         }
+       } else {
+         const res = await fetch('/api/teachers', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+             email: form.email,
+             password: form.password,
+             full_name: form.full_name,
+             phone: form.phone || null,
+             color: form.color,
++            birth_date: form.birth_date || null,
+           }),
+         })
+         if (!res.ok) {
+           const data = await res.json()
+           alert(data.error || '¦ÞTÈ¦¬¦-¦¦¦- ¦¬TÀ¦¬ TÁ¦-¦¬¦+¦-¦-¦¬¦¬')
+           return
+         }
+       }
+       onSaved()
+     } catch (err: any) {
+@@ -102,20 +106,24 @@ export default function TeacherForm({
+     }
+   }
+ 
+   return (
+     <Modal isOpen onClose={onClose} title={teacher ? '¦à¦¦¦+¦-¦¦TÂ¦¬TÀ¦-¦-¦-TÂTÌ ¦¬TÀ¦¦¦¬¦-¦+¦-¦-¦-TÂ¦¦¦¬TÏ' : '¦Ý¦-¦-TË¦¦ ¦¬TÀ¦¦¦¬¦-¦+¦-¦-¦-TÂ¦¦¦¬TÌ'} maxWidth="md">
+         <form onSubmit={handleSubmit} className="space-y-3">
+           <div>
+             <label className="block text-sm">¦ß¦-¦¬¦-¦-¦¦ ¦¬¦-TÏ</label>
+             <input type="text" name="full_name" value={form.full_name} onChange={handleChange} className="w-full border p-2 rounded" />
+           </div>
++          <div>
++            <label className="block text-sm">¦Ô¦-TÂ¦- TÀ¦-¦¦¦+¦¦¦-¦¬TÏ</label>
++            <input type="date" name="birth_date" value={form.birth_date} onChange={handleChange} className="w-full border p-2 rounded" />
++          </div>
+           <div>
+             <label className="block text-sm">¦â¦¦¦¬¦¦TÄ¦-¦-</label>
+             <input type="tel" name="phone" value={form.phone} onChange={handleChange} onBlur={() => { if (form.phone && !isValidPhone(form.phone)) setPhoneError('¦Ý¦¦¦¦¦-TÀTÀ¦¦¦¦TÂ¦-TË¦¦ ¦-¦-¦-¦¦TÀ'); else setPhoneError('') }} className={`w-full border p-2 rounded ${phoneError ? 'border-red-500' : ''}`} />
+             {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
+           </div>
+           <div>
+             <label className="block text-sm">Email {!teacher ? '*' : ''}</label>
+             <input
+               type="email"
+               name="email"

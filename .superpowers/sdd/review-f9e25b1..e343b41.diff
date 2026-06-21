@@ -1,0 +1,18 @@
+# Review package: f9e25b1..e343b41
+
+## Commits
+e343b41 feat: add birth_date columns to students and profiles
+
+## Files changed
+ migrations/add_birth_date.sql | 2 ++
+ 1 file changed, 2 insertions(+)
+
+## Diff
+diff --git a/migrations/add_birth_date.sql b/migrations/add_birth_date.sql
+new file mode 100644
+index 0000000..697d324
+--- /dev/null
++++ b/migrations/add_birth_date.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE students ADD COLUMN IF NOT EXISTS birth_date date;
++ALTER TABLE profiles ADD COLUMN IF NOT EXISTS birth_date date;

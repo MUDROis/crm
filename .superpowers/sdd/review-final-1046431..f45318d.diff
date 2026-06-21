@@ -1,0 +1,1118 @@
+# Review package: 1046431..f45318d
+
+## Commits
+f45318d style: add toast slide-in animation
+0bca8e5 feat: add birth_date field to student and teacher forms
+4eb36dc feat: add birthday cron API route
+ecb024c feat: integrate notifications into layouts and navbars
+5426f4a feat: add NotificationToast component
+3664747 feat: add NotificationBell component with dropdown
+d4f9c3b feat: add NotificationContext with realtime subscription
+1749291 feat: add notification triggers on tasks and lessons
+e343b41 feat: add birth_date columns to students and profiles
+f9e25b1 feat: add notifications table with indexes and realtime
+
+## Files changed
+ migrations/add_birth_date.sql            |   2 +
+ migrations/add_notification_triggers.sql | 119 +++++++++++++++++++++++++
+ migrations/add_notifications.sql         |  15 ++++
+ src/app/admin/layout.tsx                 |  11 ++-
+ src/app/admin/teachers/page.tsx          |   3 +-
+ src/app/api/cron/birthdays/route.ts      | 101 +++++++++++++++++++++
+ src/app/api/teachers/[id]/route.ts       |   1 +
+ src/app/api/teachers/route.ts            |   3 +-
+ src/app/globals.css                      |  26 ++++++
+ src/app/teacher/layout.tsx               |  11 ++-
+ src/components/AdminNavbar.tsx           |   2 +
+ src/components/NotificationBell.tsx      | 119 +++++++++++++++++++++++++
+ src/components/NotificationToast.tsx     |  55 ++++++++++++
+ src/components/TeacherNavbar.tsx         |   2 +
+ src/components/students/StudentForm.tsx  |   6 ++
+ src/components/teachers/TeacherForm.tsx  |   8 ++
+ src/contexts/NotificationContext.tsx     | 146 +++++++++++++++++++++++++++++++
+ 17 files changed, 622 insertions(+), 8 deletions(-)
+
+## Diff
+diff --git a/migrations/add_birth_date.sql b/migrations/add_birth_date.sql
+new file mode 100644
+index 0000000..697d324
+--- /dev/null
++++ b/migrations/add_birth_date.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE students ADD COLUMN IF NOT EXISTS birth_date date;
++ALTER TABLE profiles ADD COLUMN IF NOT EXISTS birth_date date;
+diff --git a/migrations/add_notification_triggers.sql b/migrations/add_notification_triggers.sql
+new file mode 100644
+index 0000000..3fee692
+--- /dev/null
++++ b/migrations/add_notification_triggers.sql
+@@ -0,0 +1,119 @@
++-- Helper: insert notification
++CREATE OR REPLACE FUNCTION insert_notification(
++  p_user_id uuid,
++  p_title text,
++  p_body text,
++  p_type text,
++  p_link text
++) RETURNS void AS $$
++BEGIN
++  IF p_user_id IS NOT NULL THEN
++    INSERT INTO notifications (user_id, title, body, type, link)
++    VALUES (p_user_id, p_title, p_body, p_type, p_link);
++  END IF;
++END;
++$$ LANGUAGE plpgsql;
++
++-- Trigger: new task
++CREATE OR REPLACE FUNCTION notify_task_new()
++RETURNS trigger AS $$
++BEGIN
++  PERFORM insert_notification(
++    NEW.assigned_to,
++    '¦Ý¦-¦-¦-TÏ ¦¬¦-¦+¦-TÇ¦-',
++    NEW.title,
++    'task_new',
++    '/teacher/tasks'
++  );
++  RETURN NEW;
++END;
++$$ LANGUAGE plpgsql;
++
++DROP TRIGGER IF EXISTS trg_notify_task_new ON tasks;
++CREATE TRIGGER trg_notify_task_new
++  AFTER INSERT ON tasks
++  FOR EACH ROW
++  EXECUTE FUNCTION notify_task_new();
++
++-- Trigger: task completed
++CREATE OR REPLACE FUNCTION notify_task_completed()
++RETURNS trigger AS $$
++BEGIN
++  IF NEW.completed = true AND (OLD.completed = false OR OLD.completed IS NULL) THEN
++    PERFORM insert_notification(
++      NEW.created_by,
++      '¦×¦-¦+¦-TÇ¦- ¦-TË¦¬¦-¦¬¦-¦¦¦-¦-',
++      NEW.title,
++      'task_completed',
++      '/admin/tasks'
++    );
++  END IF;
++  RETURN NEW;
++END;
++$$ LANGUAGE plpgsql;
++
++DROP TRIGGER IF EXISTS trg_notify_task_completed ON tasks;
++CREATE TRIGGER trg_notify_task_completed
++  AFTER UPDATE ON tasks
++  FOR EACH ROW
++  EXECUTE FUNCTION notify_task_completed();
++
++-- Trigger: new lesson
++CREATE OR REPLACE FUNCTION notify_lesson_new()
++RETURNS trigger AS $$
++BEGIN
++  PERFORM insert_notification(
++    NEW.teacher_id,
++    '¦Ý¦-¦-TË¦¦ TÃTÀ¦-¦¦',
++    NEW.lesson_date::text || ' ' || NEW.start_time::text,
++    'lesson_new',
++    '/teacher/lessons'
++  );
++  RETURN NEW;
++END;
++$$ LANGUAGE plpgsql;
++
++DROP TRIGGER IF EXISTS trg_notify_lesson_new ON lessons;
++CREATE TRIGGER trg_notify_lesson_new
++  AFTER INSERT ON lessons
++  FOR EACH ROW
++  EXECUTE FUNCTION notify_lesson_new();
++
++-- Trigger: lesson changed/cancelled
++CREATE OR REPLACE FUNCTION notify_lesson_changed()
++RETURNS trigger AS $$
++DECLARE
++  v_title text;
++  v_type text;
++BEGIN
++  -- Only notify if relevant fields changed
++  IF OLD.lesson_date IS DISTINCT FROM NEW.lesson_date
++     OR OLD.start_time IS DISTINCT FROM NEW.start_time
++     OR OLD.end_time IS DISTINCT FROM NEW.end_time
++     OR OLD.status IS DISTINCT FROM NEW.status
++  THEN
++    IF OLD.status != 'cancelled' AND NEW.status = 'cancelled' THEN
++      v_title := '¦ãTÀ¦-¦¦ ¦-TÂ¦-¦¦¦-TÑ¦-';
++      v_type := 'lesson_cancelled';
++    ELSE
++      v_title := '¦ãTÀ¦-¦¦ ¦¬¦¬¦-¦¦¦-TÑ¦-';
++      v_type := 'lesson_updated';
++    END IF;
++
++    PERFORM insert_notification(
++      NEW.teacher_id,
++      v_title,
++      NEW.lesson_date::text || ' ' || NEW.start_time::text,
++      v_type,
++      '/teacher/lessons'
++    );
++  END IF;
++  RETURN NEW;
++END;
++$$ LANGUAGE plpgsql;
++
++DROP TRIGGER IF EXISTS trg_notify_lesson_changed ON lessons;
++CREATE TRIGGER trg_notify_lesson_changed
++  AFTER UPDATE ON lessons
++  FOR EACH ROW
++  EXECUTE FUNCTION notify_lesson_changed();
+diff --git a/migrations/add_notifications.sql b/migrations/add_notifications.sql
+new file mode 100644
+index 0000000..6eceef8
+--- /dev/null
++++ b/migrations/add_notifications.sql
+@@ -0,0 +1,15 @@
++CREATE TABLE IF NOT EXISTS notifications (
++  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
++  user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
++  title text NOT NULL,
++  body text,
++  type text NOT NULL,
++  link text,
++  is_read boolean NOT NULL DEFAULT false,
++  created_at timestamptz NOT NULL DEFAULT now()
++);
++
++CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, is_read);
++CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(user_id, created_at DESC);
++
++ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
+diff --git a/src/app/admin/layout.tsx b/src/app/admin/layout.tsx
+index 4474581..836a775 100644
+--- a/src/app/admin/layout.tsx
++++ b/src/app/admin/layout.tsx
+@@ -1,13 +1,18 @@
+ import AuthGuard from '@/components/AuthGuard'
+ import AdminNavbar from '@/components/AdminNavbar'
+ import Breadcrumbs from '@/components/Breadcrumbs'
++import { NotificationProvider } from '@/contexts/NotificationContext'
++import NotificationToast from '@/components/NotificationToast'
+ 
+ export default function AdminLayout({ children }: { children: React.ReactNode }) {
+   return (
+     <AuthGuard requiredRole="admin">
+-      <AdminNavbar />
+-      <Breadcrumbs />
+-      <div>{children}</div>
++      <NotificationProvider>
++        <AdminNavbar />
++        <Breadcrumbs />
++        <div>{children}</div>
++        <NotificationToast />
++      </NotificationProvider>
+     </AuthGuard>
+   )
+ }
+diff --git a/src/app/admin/teachers/page.tsx b/src/app/admin/teachers/page.tsx
+index c792131..d0d3160 100644
+--- a/src/app/admin/teachers/page.tsx
++++ b/src/app/admin/teachers/page.tsx
+@@ -4,38 +4,39 @@ import { useState, useEffect } from 'react'
+ import { useRouter } from 'next/navigation'
+ import { createClient } from '@/utils/supabase/client'
+ import { useSort } from '@/hooks/useSort'
+ import TeacherForm from '@/components/teachers/TeacherForm'
+ 
+ interface Teacher {
+   id: string
+   email: string
+   full_name: string
+   status: string
++  birth_date?: string | null
+ }
+ 
+ export default function TeachersPage() {
+   const router = useRouter()
+   const [teachers, setTeachers] = useState<Teacher[]>([])
+   const [loading, setLoading] = useState(true)
+   const [showForm, setShowForm] = useState(false)
+   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null)
+   const [filterStatus, setFilterStatus] = useState<'active' | 'archived' | 'all'>('active')
+   const supabase = createClient()
+ 
+   useEffect(() => {
+     loadTeachers()
+   }, [filterStatus])
+ 
+   async function loadTeachers() {
+     setLoading(true)
+-    let query = supabase.from('profiles').select('id, email, full_name, status').eq('role', 'teacher')
++    let query = supabase.from('profiles').select('id, email, full_name, status, birth_date').eq('role', 'teacher')
+     if (filterStatus === 'active') query = query.eq('status', 'active')
+     else if (filterStatus === 'archived') query = query.eq('status', 'archived')
+     const { data, error } = await query.order('full_name')
+     if (!error && data) setTeachers(data)
+     setLoading(false)
+   }
+   const { sorted: sortedTeachers, sortKey, sortAsc, toggleSort } = useSort(teachers, 'full_name')
+ 
+   const handleAdd = () => {
+     setEditingTeacher(null)
+diff --git a/src/app/api/cron/birthdays/route.ts b/src/app/api/cron/birthdays/route.ts
+new file mode 100644
+index 0000000..1ad2600
+--- /dev/null
++++ b/src/app/api/cron/birthdays/route.ts
+@@ -0,0 +1,101 @@
++import { NextResponse } from 'next/server'
++import { createClient } from '@supabase/supabase-js'
++
++export async function GET(request: Request) {
++  const authHeader = request.headers.get('authorization')
++  const secret = process.env.CRON_SECRET
++  if (!secret || authHeader !== `Bearer ${secret}`) {
++    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
++  }
++
++  const supabaseAdmin = createClient(
++    process.env.NEXT_PUBLIC_SUPABASE_URL!,
++    process.env.SUPABASE_SERVICE_ROLE_KEY!,
++    { auth: { autoRefreshToken: false, persistSession: false } }
++  )
++
++  const { data: admins } = await supabaseAdmin
++    .from('profiles')
++    .select('id')
++    .eq('role', 'admin')
++  if (!admins || admins.length === 0) {
++    return NextResponse.json({ inserted: 0 })
++  }
++  const adminIds = admins.map(a => a.id)
++
++  const today = new Date()
++  const dates: string[] = []
++  for (let i = 0; i <= 3; i++) {
++    const d = new Date(today)
++    d.setDate(d.getDate() + i)
++    const mm = String(d.getMonth() + 1).padStart(2, '0')
++    const dd = String(d.getDate()).padStart(2, '0')
++    dates.push(`${mm}-${dd}`)
++  }
++
++  const { data: students } = await supabaseAdmin
++    .from('students')
++    .select('id, full_name, birth_date')
++    .not('birth_date', 'is', null)
++  const { data: teachers } = await supabaseAdmin
++    .from('profiles')
++    .select('id, full_name, birth_date')
++    .eq('role', 'teacher')
++    .not('birth_date', 'is', null)
++
++  const birthdayPeople: { name: string; type: string; link: string }[] = []
++
++  const isInRange = (dateStr: string) => {
++    const mmdd = dateStr.slice(5)
++    return dates.includes(mmdd)
++  }
++
++  for (const s of students || []) {
++    if (isInRange(s.birth_date)) {
++      birthdayPeople.push({ name: s.full_name, type: 'student', link: '/admin/students' })
++    }
++  }
++  for (const t of teachers || []) {
++    if (isInRange(t.birth_date)) {
++      birthdayPeople.push({ name: t.full_name, type: 'teacher', link: '/admin/teachers' })
++    }
++  }
++
++  if (birthdayPeople.length === 0) {
++    return NextResponse.json({ inserted: 0 })
++  }
++
++  const todayStart = new Date()
++  todayStart.setHours(0, 0, 0, 0)
++  const todayEnd = new Date()
++  todayEnd.setHours(23, 59, 59, 999)
++
++  const { data: existingNotifs } = await supabaseAdmin
++    .from('notifications')
++    .select('id')
++    .eq('type', 'birthday')
++    .gte('created_at', todayStart.toISOString())
++    .lte('created_at', todayEnd.toISOString())
++
++  if (existingNotifs && existingNotifs.length > 0) {
++    return NextResponse.json({ inserted: 0, skipped: 'already sent today' })
++  }
++
++  let inserted = 0
++  for (const person of birthdayPeople) {
++    for (const adminId of adminIds) {
++      const { error } = await supabaseAdmin.from('notifications').insert({
++        user_id: adminId,
++        title: `¨ßÎÂ ¦Ô¦¦¦-TÌ TÀ¦-¦¦¦+¦¦¦-¦¬TÏ: ${person.name}`,
++        body: person.type === 'student' ? '¦ã TÃTÇ¦¦¦-¦¬¦¦¦- TÁ¦¦¦¦¦-¦+¦-TÏ ¦+¦¦¦-TÌ TÀ¦-¦¦¦+¦¦¦-¦¬TÏ' : '¦ã ¦¬TÀ¦¦¦¬¦-¦+¦-¦-¦-TÂ¦¦¦¬TÏ TÁ¦¦¦¦¦-¦+¦-TÏ ¦+¦¦¦-TÌ TÀ¦-¦¦¦+¦¦¦-¦¬TÏ',
++        type: 'birthday',
++        link: person.link,
++      })
++      if (!error) inserted++
++    }
++  }
++
++  return NextResponse.json({ inserted })
++}
++
++export const dynamic = 'force-dynamic'
+diff --git a/src/app/api/teachers/[id]/route.ts b/src/app/api/teachers/[id]/route.ts
+index 1232b25..8e677f0 100644
+--- a/src/app/api/teachers/[id]/route.ts
++++ b/src/app/api/teachers/[id]/route.ts
+@@ -12,20 +12,21 @@ export async function PATCH(
+   { params }: { params: Promise<{ id: string }> }
+ ) {
+   try {
+     const { id } = await params
+     const body = await request.json()
+ 
+     const updates: any = {}
+     if (body.full_name !== undefined) updates.full_name = body.full_name
+     if (body.phone !== undefined) updates.phone = body.phone
+     if (body.color !== undefined) updates.color = body.color
++    if (body.birth_date !== undefined) updates.birth_date = body.birth_date
+ 
+     if (Object.keys(updates).length > 0) {
+       const { error } = await supabaseAdmin
+         .from('profiles')
+         .update(updates)
+         .eq('id', id)
+ 
+       if (error) {
+         return NextResponse.json({ error: error.message }, { status: 500 })
+       }
+diff --git a/src/app/api/teachers/route.ts b/src/app/api/teachers/route.ts
+index fa4c99f..c368687 100644
+--- a/src/app/api/teachers/route.ts
++++ b/src/app/api/teachers/route.ts
+@@ -3,21 +3,21 @@ import { createClient } from '@supabase/supabase-js'
+ 
+ const supabaseAdmin = createClient(
+   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+   process.env.SUPABASE_SERVICE_ROLE_KEY!,
+   { auth: { autoRefreshToken: false, persistSession: false } }
+ )
+ 
+ export async function POST(request: NextRequest) {
+   try {
+     const body = await request.json()
+-    const { email, password, full_name, phone, color } = body
++    const { email, password, full_name, phone, color, birth_date } = body
+ 
+     if (!email || !password) {
+       return NextResponse.json({ error: 'Email ¦¬ ¦¬¦-TÀ¦-¦¬TÌ ¦-¦-TÏ¦¬¦-TÂ¦¦¦¬TÌ¦-TË' }, { status: 400 })
+     }
+ 
+     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+       email,
+       password,
+       email_confirm: true,
+       app_metadata: { role: 'teacher' },
+@@ -32,20 +32,21 @@ export async function POST(request: NextRequest) {
+       return NextResponse.json({ error: '¦Ý¦¦ TÃ¦+¦-¦¬¦-TÁTÌ TÁ¦-¦¬¦+¦-TÂTÌ ¦¬¦-¦¬TÌ¦¬¦-¦-¦-TÂ¦¦¦¬TÏ' }, { status: 500 })
+     }
+ 
+     const { error: profileError } = await supabaseAdmin
+       .from('profiles')
+       .update({
+         role: 'teacher',
+         full_name: full_name || null,
+         phone: phone || null,
+         color: color || null,
++        birth_date: birth_date || null,
+       })
+       .eq('id', userId)
+ 
+     if (profileError) {
+       return NextResponse.json({ error: profileError.message }, { status: 500 })
+     }
+ 
+     return NextResponse.json({ success: true, id: userId })
+   } catch (err: any) {
+     return NextResponse.json({ error: err.message }, { status: 500 })
+diff --git a/src/app/globals.css b/src/app/globals.css
+index fd55f6f..f98ec0d 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -16,10 +16,36 @@
+   --color-danger: #ef4444;
+ }
+ 
+ :root {
+   --foreground: #171717;
+ }
+ 
+ body {
+   background-color: var(--color-gray-50);
+ }
++
++.fade-in {
++  animation: fadeIn 0.2s ease-in-out;
++}
++@keyframes fadeIn {
++  from { opacity: 0; transform: translateY(4px); }
++  to { opacity: 1; transform: translateY(0); }
++}
++
++.skeleton {
++  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
++  background-size: 200% 100%;
++  animation: shimmer 1.5s infinite;
++}
++@keyframes shimmer {
++  0% { background-position: -200% 0; }
++  100% { background-position: 200% 0; }
++}
++
++.toast-enter {
++  animation: slideInRight 0.3s ease-out;
++}
++@keyframes slideInRight {
++  from { opacity: 0; transform: translateX(100%); }
++  to { opacity: 1; transform: translateX(0); }
++}
+diff --git a/src/app/teacher/layout.tsx b/src/app/teacher/layout.tsx
+index 8da35a9..ae3d5b5 100644
+--- a/src/app/teacher/layout.tsx
++++ b/src/app/teacher/layout.tsx
+@@ -1,27 +1,32 @@
+ import AuthGuard from '@/components/AuthGuard'
+ import TeacherNavbar from '@/components/TeacherNavbar'
+ import Breadcrumbs from '@/components/Breadcrumbs'
+ import { createClient } from '@/utils/supabase/server'
++import { NotificationProvider } from '@/contexts/NotificationContext'
++import NotificationToast from '@/components/NotificationToast'
+ 
+ export default async function TeacherLayout({ children }: { children: React.ReactNode }) {
+   const supabase = await createClient()
+   const { data: { user } } = await supabase.auth.getUser()
+   
+   let pendingCount = 0
+   if (user) {
+     const { count } = await supabase
+       .from('tasks')
+       .select('id', { count: 'exact', head: true })
+       .eq('assigned_to', user.id)
+       .eq('completed', false)
+     if (count !== null) pendingCount = count
+   }
+ 
+   return (
+     <AuthGuard requiredRole="teacher">
+-      <TeacherNavbar pendingCount={pendingCount} />
+-      <Breadcrumbs />
+-      <div>{children}</div>
++      <NotificationProvider>
++        <TeacherNavbar pendingCount={pendingCount} />
++        <Breadcrumbs />
++        <div>{children}</div>
++        <NotificationToast />
++      </NotificationProvider>
+     </AuthGuard>
+   )
+ }
+diff --git a/src/components/AdminNavbar.tsx b/src/components/AdminNavbar.tsx
+index 54f7f88..1c9cd6b 100644
+--- a/src/components/AdminNavbar.tsx
++++ b/src/components/AdminNavbar.tsx
+@@ -1,23 +1,25 @@
+ 'use client'
+ 
+ import Link from 'next/link'
+ import GlobalSearch from '@/components/GlobalSearch'
++import NotificationBell from '@/components/NotificationBell'
+ 
+ export default function AdminNavbar() {
+   return (
+     <nav className="bg-white shadow p-4 flex justify-between items-center gap-4">
+       <Link href="/admin" className="text-xl font-bold text-gray-800 hover:text-brand-600 shrink-0">
+         ¦Ø¦Ý¦â¦Õ¦à¦Ð¦Ú¦â¦Ø¦Ò¦Ý¦Ð¦ï ¦è¦Ú¦Þ¦Û¦Ð ¦Ü¦ã¦Ô¦à¦Þ
+       </Link>
+       <GlobalSearch />
+       <div className="flex items-center gap-6 shrink-0">
++        <NotificationBell />
+         <Link href="/admin/lessons" className="text-2xl text-gray-600 hover:text-brand-600 transition">
+           ¨ßÓÅ
+         </Link>
+         <Link href="/admin/tasks" className="text-2xl text-gray-600 hover:text-brand-600 transition">
+           ¨ßÓË
+         </Link>
+         <Link href="/admin/students" className="text-2xl text-gray-600 hover:text-brand-600 transition">
+           ¨ßÑéòÀÍ¨ßÎÓ
+         </Link>
+         <Link href="/admin/groups" className="text-2xl text-gray-600 hover:text-brand-600 transition">
+diff --git a/src/components/NotificationBell.tsx b/src/components/NotificationBell.tsx
+new file mode 100644
+index 0000000..2d285a5
+--- /dev/null
++++ b/src/components/NotificationBell.tsx
+@@ -0,0 +1,119 @@
++'use client'
++
++import { useState, useRef, useEffect } from 'react'
++import { useRouter } from 'next/navigation'
++import { useNotifications } from '@/contexts/NotificationContext'
++
++const TYPE_ICONS: Record<string, string> = {
++  task_new: '¨ßÓË',
++  task_completed: 'òÜÅ',
++  lesson_new: '¨ßÓÅ',
++  lesson_updated: '¨ßÓÅ',
++  lesson_cancelled: 'òÝÌ',
++  birthday: '¨ßÎÂ',
++}
++
++function timeAgo(dateStr: string): string {
++  const now = Date.now()
++  const date = new Date(dateStr).getTime()
++  const diff = now - date
++  const minutes = Math.floor(diff / 60000)
++  if (minutes < 1) return 'TÂ¦-¦¬TÌ¦¦¦- TÇTÂ¦-'
++  if (minutes < 60) return `${minutes}¦- ¦-¦-¦¬¦-¦+`
++  const hours = Math.floor(minutes / 60)
++  if (hours < 24) return `${hours}TÇ ¦-¦-¦¬¦-¦+`
++  const days = Math.floor(hours / 24)
++  if (days < 7) return `${days}¦+ ¦-¦-¦¬¦-¦+`
++  return new Date(dateStr).toLocaleDateString('ru-RU')
++}
++
++export default function NotificationBell() {
++  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
++  const [open, setOpen] = useState(false)
++  const dropdownRef = useRef<HTMLDivElement>(null)
++  const router = useRouter()
++
++  useEffect(() => {
++    function handleClickOutside(e: MouseEvent) {
++      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
++        setOpen(false)
++      }
++    }
++    document.addEventListener('mousedown', handleClickOutside)
++    return () => document.removeEventListener('mousedown', handleClickOutside)
++  }, [])
++
++  useEffect(() => {
++    function handleEsc(e: KeyboardEvent) {
++      if (e.key === 'Escape') setOpen(false)
++    }
++    document.addEventListener('keydown', handleEsc)
++    return () => document.removeEventListener('keydown', handleEsc)
++  }, [])
++
++  const handleClick = async (n: typeof notifications[0]) => {
++    if (!n.is_read) await markAsRead(n.id)
++    setOpen(false)
++    if (n.link) router.push(n.link)
++  }
++
++  return (
++    <div className="relative" ref={dropdownRef}>
++      <button
++        onClick={() => setOpen(!open)}
++        className="relative text-2xl text-gray-600 hover:text-brand-600 transition"
++        title="¦ã¦-¦¦¦+¦-¦-¦¬¦¦¦-¦¬TÏ"
++      >
++        ¨ßÔÔ
++        {unreadCount > 0 && (
++          <span className="absolute -top-2 -right-5 bg-danger text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
++            {unreadCount > 99 ? '99+' : unreadCount}
++          </span>
++        )}
++      </button>
++
++      {open && (
++        <div className="absolute right-0 mt-2 w-80 bg-white shadow-lg border rounded-lg z-50 max-h-96 overflow-y-auto">
++          <div className="p-3 border-b flex justify-between items-center">
++            <span className="font-semibold">¦ã¦-¦¦¦+¦-¦-¦¬¦¦¦-¦¬TÏ</span>
++            {unreadCount > 0 && (
++              <button
++                onClick={markAllAsRead}
++                className="text-xs text-brand-600 hover:underline"
++              >
++                ¦ÞTÂ¦-¦¦TÂ¦¬TÂTÌ ¦-TÁ¦¦
++              </button>
++            )}
++          </div>
++
++          {notifications.length === 0 ? (
++            <div className="p-6 text-center text-gray-500 text-sm">¦Ý¦¦TÂ TÃ¦-¦¦¦+¦-¦-¦¬¦¦¦-¦¬¦¦</div>
++          ) : (
++            notifications.slice(0, 10).map((n) => (
++              <button
++                key={n.id}
++                onClick={() => handleClick(n)}
++                className={`w-full text-left p-3 border-b last:border-0 hover:bg-gray-50 flex gap-3 items-start ${
++                  !n.is_read ? 'bg-brand-50' : ''
++                }`}
++              >
++                <span className="text-lg shrink-0 mt-0.5">
++                  {TYPE_ICONS[n.type] || '¨ßÔÔ'}
++                </span>
++                <div className="flex-1 min-w-0">
++                  <div className={`text-sm ${!n.is_read ? 'font-semibold' : ''}`}>
++                    {n.title}
++                  </div>
++                  {n.body && (
++                    <div className="text-xs text-gray-500 truncate">{n.body}</div>
++                  )}
++                  <div className="text-xs text-gray-400 mt-1">{timeAgo(n.created_at)}</div>
++                </div>
++              </button>
++            ))
++          )}
++        </div>
++      )}
++    </div>
++  )
++}
+diff --git a/src/components/NotificationToast.tsx b/src/components/NotificationToast.tsx
+new file mode 100644
+index 0000000..8ef5426
+--- /dev/null
++++ b/src/components/NotificationToast.tsx
+@@ -0,0 +1,55 @@
++'use client'
++
++import { useRouter } from 'next/navigation'
++import { useNotifications } from '@/contexts/NotificationContext'
++
++const TYPE_ICONS: Record<string, string> = {
++  task_new: '¨ßÓË',
++  task_completed: 'òÜÅ',
++  lesson_new: '¨ßÓÅ',
++  lesson_updated: '¨ßÓÅ',
++  lesson_cancelled: 'òÝÌ',
++  birthday: '¨ßÎÂ',
++}
++
++export default function NotificationToast() {
++  const { toasts, dismissToast, markAsRead } = useNotifications()
++  const router = useRouter()
++
++  if (toasts.length === 0) return null
++
++  return (
++    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
++      {toasts.map((toast) => (
++        <div
++          key={toast.id}
++          className="fade-in bg-white shadow-lg border rounded-lg p-3 flex gap-3 items-start max-w-sm cursor-pointer hover:bg-gray-50 transition"
++          onClick={async () => {
++            dismissToast(toast.id)
++            await markAsRead(toast.id)
++            if (toast.link) router.push(toast.link)
++          }}
++        >
++          <span className="text-lg shrink-0 mt-0.5">
++            {TYPE_ICONS[toast.type] || '¨ßÔÔ'}
++          </span>
++          <div className="flex-1 min-w-0">
++            <div className="text-sm font-semibold">{toast.title}</div>
++            {toast.body && (
++              <div className="text-xs text-gray-500 line-clamp-2">{toast.body}</div>
++            )}
++          </div>
++          <button
++            onClick={(e) => {
++              e.stopPropagation()
++              dismissToast(toast.id)
++            }}
++            className="text-gray-400 hover:text-gray-600 shrink-0"
++          >
++            òÜÕ
++          </button>
++        </div>
++      ))}
++    </div>
++  )
++}
+diff --git a/src/components/TeacherNavbar.tsx b/src/components/TeacherNavbar.tsx
+index 826f8e0..8fd42f8 100644
+--- a/src/components/TeacherNavbar.tsx
++++ b/src/components/TeacherNavbar.tsx
+@@ -1,15 +1,16 @@
+ 'use client'
+ 
+ import { useState, useEffect } from 'react'
+ import Link from 'next/link'
+ import GlobalSearch from '@/components/GlobalSearch'
++import NotificationBell from '@/components/NotificationBell'
+ import { createClient } from '@/utils/supabase/client'
+ 
+ interface TeacherNavbarProps {
+   pendingCount?: number;
+ }
+ 
+ export default function TeacherNavbar({ pendingCount = 0 }: TeacherNavbarProps) {
+   const [count, setCount] = useState<number>(pendingCount)
+ 
+   useEffect(() => {
+@@ -33,20 +34,21 @@ export default function TeacherNavbar({ pendingCount = 0 }: TeacherNavbarProps)
+     }
+   }, [pendingCount])
+ 
+   return (
+     <nav className="bg-white shadow p-4 flex justify-between items-center gap-4">
+       <Link href="/teacher" className="text-xl font-bold text-gray-800 hover:text-brand-600 shrink-0">
+         ¦Ø¦Ý¦â¦Õ¦à¦Ð¦Ú¦â¦Ø¦Ò¦Ý¦Ð¦ï ¦è¦Ú¦Þ¦Û¦Ð ¦Ü¦ã¦Ô¦à¦Þ
+       </Link>
+       <GlobalSearch />
+       <div className="flex items-center gap-6 shrink-0">
++        <NotificationBell />
+         <Link href="/teacher/lessons" className="text-2xl text-gray-600 hover:text-brand-600 transition">
+           ¨ßÓÅ
+         </Link>
+         <Link href="/teacher/tasks" className="relative text-2xl text-gray-600 hover:text-brand-600 transition">
+           ¨ßÓË
+           {count > 0 && (
+             <span className="absolute -top-2 -right-5 bg-danger text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+               {count}
+             </span>
+           )}
+diff --git a/src/components/students/StudentForm.tsx b/src/components/students/StudentForm.tsx
+index 519290e..968a489 100644
+--- a/src/components/students/StudentForm.tsx
++++ b/src/components/students/StudentForm.tsx
+@@ -11,20 +11,21 @@ interface Student {
+   phone: string
+   email: string
+   subject: string
+   teacher_id: string | null
+   type: 'individual' | 'group'
+   customer_name: string
+   customer_contact: string
+   notes: string
+   online_link: string
+   status: string
++  birth_date: string
+ }
+ 
+ interface Teacher {
+   id: string
+   full_name: string
+ }
+ 
+ export default function StudentForm({
+   onClose,
+   onSaved,
+@@ -40,20 +41,21 @@ export default function StudentForm({
+       phone: '',
+       email: '',
+       subject: '',
+       teacher_id: null,
+       type: 'individual',
+       customer_name: '',
+       customer_contact: '',
+       notes: '',
+       online_link: '',
+       status: 'active',
++      birth_date: '',
+     }
+   )
+   const [teachers, setTeachers] = useState<Teacher[]>([])
+   const [loading, setLoading] = useState(false)
+   const [errors, setErrors] = useState<Record<string, string>>({})
+   const supabase = createClient()
+ 
+   useEffect(() => {
+     async function loadTeachers() {
+       const { data } = await supabase.from('profiles').select('id, full_name').eq('role', 'teacher')
+@@ -137,20 +139,24 @@ export default function StudentForm({
+   }
+ 
+   return (
+     <Modal isOpen onClose={onClose} title={form.id ? '¦à¦¦¦+¦-¦¦TÂ¦¬TÀ¦-¦-¦-TÂTÌ TÃTÇ¦¦¦-¦¬¦¦¦-' : '¦Ý¦-¦-TË¦¦ TÃTÇ¦¦¦-¦¬¦¦'} maxWidth="2xl">
+         <form onSubmit={handleSubmit} className="space-y-3">
+           <div className="grid grid-cols-2 gap-4">
+             <div>
+               <label className="block text-sm">¦ä¦Ø¦Þ *</label>
+               <input name="full_name" value={form.full_name} onChange={handleChange} required className="w-full border p-2 rounded" />
+             </div>
++            <div>
++              <label className="block text-sm">¦Ô¦-TÂ¦- TÀ¦-¦¦¦+¦¦¦-¦¬TÏ</label>
++              <input type="date" name="birth_date" value={form.birth_date} onChange={handleChange} className="w-full border p-2 rounded" />
++            </div>
+             <div>
+               <label className="block text-sm font-medium text-gray-700">¦â¦¦¦¬¦¦TÄ¦-¦-</label>
+               <div className="relative">
+                 <input
+                   name="phone"
+                   value={form.phone}
+                   onChange={handleChange}
+                   onBlur={handleBlur}
+                   className={`w-full border p-2 rounded-lg ${errors.phone ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-brand-500'}`}
+                 />
+diff --git a/src/components/teachers/TeacherForm.tsx b/src/components/teachers/TeacherForm.tsx
+index b1b86cb..9bc9ab7 100644
+--- a/src/components/teachers/TeacherForm.tsx
++++ b/src/components/teachers/TeacherForm.tsx
+@@ -4,38 +4,40 @@ import { useState } from 'react'
+ import { isValidEmail, isValidPhone } from '@/utils/validation'
+ import Modal from '@/components/ui/Modal'
+ 
+ interface Teacher {
+   id: string
+   email: string
+   full_name: string
+   phone?: string | null
+   color?: string | null
+   status?: string
++  birth_date?: string | null
+ }
+ 
+ export default function TeacherForm({
+   onClose,
+   onSaved,
+   teacher,
+ }: {
+   onClose: () => void
+   onSaved: () => void
+   teacher?: Teacher | null
+ }) {
+   const [form, setForm] = useState({
+     email: teacher?.email || '',
+     full_name: teacher?.full_name || '',
+     phone: teacher?.phone || '',
+     password: '',
+     color: teacher?.color || '#3B82F6',
+     status: teacher?.status || 'active',
++    birth_date: teacher?.birth_date || '',
+   })
+   const [loading, setLoading] = useState(false)
+   const [emailError, setEmailError] = useState('')
+   const [phoneError, setPhoneError] = useState('')
+ 
+   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+     const { name, value } = e.target
+     setForm(prev => ({ ...prev, [name]: value }))
+     if (name === 'email') setEmailError('')
+     if (name === 'phone') setPhoneError('')
+@@ -61,38 +63,40 @@ export default function TeacherForm({
+     setLoading(true)
+     try {
+       if (teacher?.id) {
+         const res = await fetch(`/api/teachers/${teacher.id}`, {
+           method: 'PATCH',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+             full_name: form.full_name,
+             phone: form.phone || null,
+             color: form.color,
++            birth_date: form.birth_date || null,
+             ...(form.password && { password: form.password }),
+           }),
+         })
+         if (!res.ok) {
+           const data = await res.json()
+           alert(data.error || '¦ÞTÈ¦¬¦-¦¦¦- ¦¬TÀ¦¬ TÁ¦-TÅTÀ¦-¦-¦¦¦-¦¬¦¬')
+           return
+         }
+       } else {
+         const res = await fetch('/api/teachers', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+             email: form.email,
+             password: form.password,
+             full_name: form.full_name,
+             phone: form.phone || null,
+             color: form.color,
++            birth_date: form.birth_date || null,
+           }),
+         })
+         if (!res.ok) {
+           const data = await res.json()
+           alert(data.error || '¦ÞTÈ¦¬¦-¦¦¦- ¦¬TÀ¦¬ TÁ¦-¦¬¦+¦-¦-¦¬¦¬')
+           return
+         }
+       }
+       onSaved()
+     } catch (err: any) {
+@@ -102,20 +106,24 @@ export default function TeacherForm({
+     }
+   }
+ 
+   return (
+     <Modal isOpen onClose={onClose} title={teacher ? '¦à¦¦¦+¦-¦¦TÂ¦¬TÀ¦-¦-¦-TÂTÌ ¦¬TÀ¦¦¦¬¦-¦+¦-¦-¦-TÂ¦¦¦¬TÏ' : '¦Ý¦-¦-TË¦¦ ¦¬TÀ¦¦¦¬¦-¦+¦-¦-¦-TÂ¦¦¦¬TÌ'} maxWidth="md">
+         <form onSubmit={handleSubmit} className="space-y-3">
+           <div>
+             <label className="block text-sm">¦ß¦-¦¬¦-¦-¦¦ ¦¬¦-TÏ</label>
+             <input type="text" name="full_name" value={form.full_name} onChange={handleChange} className="w-full border p-2 rounded" />
+           </div>
++          <div>
++            <label className="block text-sm">¦Ô¦-TÂ¦- TÀ¦-¦¦¦+¦¦¦-¦¬TÏ</label>
++            <input type="date" name="birth_date" value={form.birth_date} onChange={handleChange} className="w-full border p-2 rounded" />
++          </div>
+           <div>
+             <label className="block text-sm">¦â¦¦¦¬¦¦TÄ¦-¦-</label>
+             <input type="tel" name="phone" value={form.phone} onChange={handleChange} onBlur={() => { if (form.phone && !isValidPhone(form.phone)) setPhoneError('¦Ý¦¦¦¦¦-TÀTÀ¦¦¦¦TÂ¦-TË¦¦ ¦-¦-¦-¦¦TÀ'); else setPhoneError('') }} className={`w-full border p-2 rounded ${phoneError ? 'border-red-500' : ''}`} />
+             {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
+           </div>
+           <div>
+             <label className="block text-sm">Email {!teacher ? '*' : ''}</label>
+             <input
+               type="email"
+               name="email"
+diff --git a/src/contexts/NotificationContext.tsx b/src/contexts/NotificationContext.tsx
+new file mode 100644
+index 0000000..58ac7f6
+--- /dev/null
++++ b/src/contexts/NotificationContext.tsx
+@@ -0,0 +1,146 @@
++'use client'
++
++import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react'
++import { createClient } from '@/utils/supabase/client'
++import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
++
++type NotificationType = 'task_new' | 'task_completed' | 'lesson_new' | 'lesson_updated' | 'lesson_cancelled' | 'birthday'
++
++interface Notification {
++  id: string
++  user_id: string
++  title: string
++  body: string | null
++  type: NotificationType
++  link: string | null
++  is_read: boolean
++  created_at: string
++}
++
++interface Toast {
++  id: string
++  title: string
++  body: string | null
++  type: NotificationType
++  link: string | null
++}
++
++interface NotificationContextValue {
++  notifications: Notification[]
++  unreadCount: number
++  toasts: Toast[]
++  markAsRead: (id: string) => Promise<void>
++  markAllAsRead: () => Promise<void>
++  dismissToast: (id: string) => void
++}
++
++const NotificationContext = createContext<NotificationContextValue | null>(null)
++
++export function NotificationProvider({ children }: { children: ReactNode }) {
++  const [notifications, setNotifications] = useState<Notification[]>([])
++  const [toasts, setToasts] = useState<Toast[]>([])
++  const [userId, setUserId] = useState<string | null>(null)
++  const supabase = useMemo(() => createClient(), [])
++  const toastsRef = useRef<Toast[]>([])
++
++  const dismissToast = useCallback((id: string) => {
++    setToasts((prev) => prev.filter((t) => t.id !== id))
++  }, [])
++
++  useEffect(() => {
++    supabase.auth.getUser().then(({ data: { user } }: { data: { user: import('@supabase/supabase-js').User | null } }) => {
++      if (user) setUserId(user.id)
++    })
++  }, [supabase])
++
++  // Load initial unread notifications
++  useEffect(() => {
++    if (!userId) return
++    supabase
++      .from('notifications')
++      .select('*')
++      .eq('user_id', userId)
++      .eq('is_read', false)
++      .order('created_at', { ascending: false })
++      .limit(50)
++      .then(({ data }: { data: Notification[] | null }) => {
++        if (data) setNotifications(data)
++      })
++  }, [userId, supabase])
++
++  // Realtime subscription
++  useEffect(() => {
++    if (!userId) return
++
++    const channel = supabase
++      .channel('notifications')
++      .on(
++        'postgres_changes',
++        {
++          event: 'INSERT',
++          schema: 'public',
++          table: 'notifications',
++          filter: `user_id=eq.${userId}`,
++        },
++        (payload: RealtimePostgresChangesPayload<Notification>) => {
++          const newNotification = payload.new as Notification
++          setNotifications((prev) => [newNotification, ...prev])
++
++          const newToast: Toast = {
++            id: newNotification.id,
++            title: newNotification.title,
++            body: newNotification.body,
++            type: newNotification.type,
++            link: newNotification.link,
++          }
++          setToasts((prev) => {
++            const next = [newToast, ...prev].slice(0, 3)
++            toastsRef.current = next
++            return next
++          })
++
++          setTimeout(() => {
++            dismissToast(newNotification.id)
++          }, 5000)
++        }
++      )
++      .subscribe()
++
++    return () => {
++      supabase.removeChannel(channel)
++    }
++  }, [userId, supabase, dismissToast])
++
++  const markAsRead = useCallback(async (id: string) => {
++    await supabase.from('notifications').update({ is_read: true }).eq('id', id)
++    setNotifications((prev) =>
++      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
++    )
++  }, [supabase])
++
++  const markAllAsRead = useCallback(async () => {
++    if (!userId) return
++    await supabase
++      .from('notifications')
++      .update({ is_read: true })
++      .eq('user_id', userId)
++      .eq('is_read', false)
++    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
++  }, [userId, supabase])
++
++  const unreadCount = notifications.filter((n) => !n.is_read).length
++
++  return (
++    <NotificationContext.Provider
++      value={{ notifications, unreadCount, toasts, markAsRead, markAllAsRead, dismissToast }}
++    >
++      {children}
++    </NotificationContext.Provider>
++  )
++}
++
++export function useNotifications() {
++  const ctx = useContext(NotificationContext)
++  if (!ctx) throw new Error('useNotifications must be used within NotificationProvider')
++  return ctx
++}

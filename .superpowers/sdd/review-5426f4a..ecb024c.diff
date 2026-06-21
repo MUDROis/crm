@@ -1,0 +1,152 @@
+# Review package: 5426f4a..ecb024c
+
+## Commits
+ecb024c feat: integrate notifications into layouts and navbars
+
+## Files changed
+ src/app/admin/layout.tsx         | 11 ++++++++---
+ src/app/teacher/layout.tsx       | 11 ++++++++---
+ src/components/AdminNavbar.tsx   |  2 ++
+ src/components/TeacherNavbar.tsx |  2 ++
+ 4 files changed, 20 insertions(+), 6 deletions(-)
+
+## Diff
+diff --git a/src/app/admin/layout.tsx b/src/app/admin/layout.tsx
+index 4474581..836a775 100644
+--- a/src/app/admin/layout.tsx
++++ b/src/app/admin/layout.tsx
+@@ -1,13 +1,18 @@
+ import AuthGuard from '@/components/AuthGuard'
+ import AdminNavbar from '@/components/AdminNavbar'
+ import Breadcrumbs from '@/components/Breadcrumbs'
++import { NotificationProvider } from '@/contexts/NotificationContext'
++import NotificationToast from '@/components/NotificationToast'
+ 
+ export default function AdminLayout({ children }: { children: React.ReactNode }) {
+   return (
+     <AuthGuard requiredRole="admin">
+-      <AdminNavbar />
+-      <Breadcrumbs />
+-      <div>{children}</div>
++      <NotificationProvider>
++        <AdminNavbar />
++        <Breadcrumbs />
++        <div>{children}</div>
++        <NotificationToast />
++      </NotificationProvider>
+     </AuthGuard>
+   )
+ }
+diff --git a/src/app/teacher/layout.tsx b/src/app/teacher/layout.tsx
+index 8da35a9..ae3d5b5 100644
+--- a/src/app/teacher/layout.tsx
++++ b/src/app/teacher/layout.tsx
+@@ -1,27 +1,32 @@
+ import AuthGuard from '@/components/AuthGuard'
+ import TeacherNavbar from '@/components/TeacherNavbar'
+ import Breadcrumbs from '@/components/Breadcrumbs'
+ import { createClient } from '@/utils/supabase/server'
++import { NotificationProvider } from '@/contexts/NotificationContext'
++import NotificationToast from '@/components/NotificationToast'
+ 
+ export default async function TeacherLayout({ children }: { children: React.ReactNode }) {
+   const supabase = await createClient()
+   const { data: { user } } = await supabase.auth.getUser()
+   
+   let pendingCount = 0
+   if (user) {
+     const { count } = await supabase
+       .from('tasks')
+       .select('id', { count: 'exact', head: true })
+       .eq('assigned_to', user.id)
+       .eq('completed', false)
+     if (count !== null) pendingCount = count
+   }
+ 
+   return (
+     <AuthGuard requiredRole="teacher">
+-      <TeacherNavbar pendingCount={pendingCount} />
+-      <Breadcrumbs />
+-      <div>{children}</div>
++      <NotificationProvider>
++        <TeacherNavbar pendingCount={pendingCount} />
++        <Breadcrumbs />
++        <div>{children}</div>
++        <NotificationToast />
++      </NotificationProvider>
+     </AuthGuard>
+   )
+ }
+diff --git a/src/components/AdminNavbar.tsx b/src/components/AdminNavbar.tsx
+index 54f7f88..1c9cd6b 100644
+--- a/src/components/AdminNavbar.tsx
++++ b/src/components/AdminNavbar.tsx
+@@ -1,23 +1,25 @@
+ 'use client'
+ 
+ import Link from 'next/link'
+ import GlobalSearch from '@/components/GlobalSearch'
++import NotificationBell from '@/components/NotificationBell'
+ 
+ export default function AdminNavbar() {
+   return (
+     <nav className="bg-white shadow p-4 flex justify-between items-center gap-4">
+       <Link href="/admin" className="text-xl font-bold text-gray-800 hover:text-brand-600 shrink-0">
+         ¦Ø¦Ý¦â¦Õ¦à¦Ð¦Ú¦â¦Ø¦Ò¦Ý¦Ð¦ï ¦è¦Ú¦Þ¦Û¦Ð ¦Ü¦ã¦Ô¦à¦Þ
+       </Link>
+       <GlobalSearch />
+       <div className="flex items-center gap-6 shrink-0">
++        <NotificationBell />
+         <Link href="/admin/lessons" className="text-2xl text-gray-600 hover:text-brand-600 transition">
+           ¨ßÓÅ
+         </Link>
+         <Link href="/admin/tasks" className="text-2xl text-gray-600 hover:text-brand-600 transition">
+           ¨ßÓË
+         </Link>
+         <Link href="/admin/students" className="text-2xl text-gray-600 hover:text-brand-600 transition">
+           ¨ßÑéòÀÍ¨ßÎÓ
+         </Link>
+         <Link href="/admin/groups" className="text-2xl text-gray-600 hover:text-brand-600 transition">
+diff --git a/src/components/TeacherNavbar.tsx b/src/components/TeacherNavbar.tsx
+index 826f8e0..8fd42f8 100644
+--- a/src/components/TeacherNavbar.tsx
++++ b/src/components/TeacherNavbar.tsx
+@@ -1,15 +1,16 @@
+ 'use client'
+ 
+ import { useState, useEffect } from 'react'
+ import Link from 'next/link'
+ import GlobalSearch from '@/components/GlobalSearch'
++import NotificationBell from '@/components/NotificationBell'
+ import { createClient } from '@/utils/supabase/client'
+ 
+ interface TeacherNavbarProps {
+   pendingCount?: number;
+ }
+ 
+ export default function TeacherNavbar({ pendingCount = 0 }: TeacherNavbarProps) {
+   const [count, setCount] = useState<number>(pendingCount)
+ 
+   useEffect(() => {
+@@ -33,20 +34,21 @@ export default function TeacherNavbar({ pendingCount = 0 }: TeacherNavbarProps)
+     }
+   }, [pendingCount])
+ 
+   return (
+     <nav className="bg-white shadow p-4 flex justify-between items-center gap-4">
+       <Link href="/teacher" className="text-xl font-bold text-gray-800 hover:text-brand-600 shrink-0">
+         ¦Ø¦Ý¦â¦Õ¦à¦Ð¦Ú¦â¦Ø¦Ò¦Ý¦Ð¦ï ¦è¦Ú¦Þ¦Û¦Ð ¦Ü¦ã¦Ô¦à¦Þ
+       </Link>
+       <GlobalSearch />
+       <div className="flex items-center gap-6 shrink-0">
++        <NotificationBell />
+         <Link href="/teacher/lessons" className="text-2xl text-gray-600 hover:text-brand-600 transition">
+           ¨ßÓÅ
+         </Link>
+         <Link href="/teacher/tasks" className="relative text-2xl text-gray-600 hover:text-brand-600 transition">
+           ¨ßÓË
+           {count > 0 && (
+             <span className="absolute -top-2 -right-5 bg-danger text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+               {count}
+             </span>
+           )}

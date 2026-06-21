@@ -1,0 +1,117 @@
+# Review package: ecb024c..4eb36dc
+
+## Commits
+4eb36dc feat: add birthday cron API route
+
+## Files changed
+ src/app/api/cron/birthdays/route.ts | 101 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 101 insertions(+)
+
+## Diff
+diff --git a/src/app/api/cron/birthdays/route.ts b/src/app/api/cron/birthdays/route.ts
+new file mode 100644
+index 0000000..1ad2600
+--- /dev/null
++++ b/src/app/api/cron/birthdays/route.ts
+@@ -0,0 +1,101 @@
++import { NextResponse } from 'next/server'
++import { createClient } from '@supabase/supabase-js'
++
++export async function GET(request: Request) {
++  const authHeader = request.headers.get('authorization')
++  const secret = process.env.CRON_SECRET
++  if (!secret || authHeader !== `Bearer ${secret}`) {
++    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
++  }
++
++  const supabaseAdmin = createClient(
++    process.env.NEXT_PUBLIC_SUPABASE_URL!,
++    process.env.SUPABASE_SERVICE_ROLE_KEY!,
++    { auth: { autoRefreshToken: false, persistSession: false } }
++  )
++
++  const { data: admins } = await supabaseAdmin
++    .from('profiles')
++    .select('id')
++    .eq('role', 'admin')
++  if (!admins || admins.length === 0) {
++    return NextResponse.json({ inserted: 0 })
++  }
++  const adminIds = admins.map(a => a.id)
++
++  const today = new Date()
++  const dates: string[] = []
++  for (let i = 0; i <= 3; i++) {
++    const d = new Date(today)
++    d.setDate(d.getDate() + i)
++    const mm = String(d.getMonth() + 1).padStart(2, '0')
++    const dd = String(d.getDate()).padStart(2, '0')
++    dates.push(`${mm}-${dd}`)
++  }
++
++  const { data: students } = await supabaseAdmin
++    .from('students')
++    .select('id, full_name, birth_date')
++    .not('birth_date', 'is', null)
++  const { data: teachers } = await supabaseAdmin
++    .from('profiles')
++    .select('id, full_name, birth_date')
++    .eq('role', 'teacher')
++    .not('birth_date', 'is', null)
++
++  const birthdayPeople: { name: string; type: string; link: string }[] = []
++
++  const isInRange = (dateStr: string) => {
++    const mmdd = dateStr.slice(5)
++    return dates.includes(mmdd)
++  }
++
++  for (const s of students || []) {
++    if (isInRange(s.birth_date)) {
++      birthdayPeople.push({ name: s.full_name, type: 'student', link: '/admin/students' })
++    }
++  }
++  for (const t of teachers || []) {
++    if (isInRange(t.birth_date)) {
++      birthdayPeople.push({ name: t.full_name, type: 'teacher', link: '/admin/teachers' })
++    }
++  }
++
++  if (birthdayPeople.length === 0) {
++    return NextResponse.json({ inserted: 0 })
++  }
++
++  const todayStart = new Date()
++  todayStart.setHours(0, 0, 0, 0)
++  const todayEnd = new Date()
++  todayEnd.setHours(23, 59, 59, 999)
++
++  const { data: existingNotifs } = await supabaseAdmin
++    .from('notifications')
++    .select('id')
++    .eq('type', 'birthday')
++    .gte('created_at', todayStart.toISOString())
++    .lte('created_at', todayEnd.toISOString())
++
++  if (existingNotifs && existingNotifs.length > 0) {
++    return NextResponse.json({ inserted: 0, skipped: 'already sent today' })
++  }
++
++  let inserted = 0
++  for (const person of birthdayPeople) {
++    for (const adminId of adminIds) {
++      const { error } = await supabaseAdmin.from('notifications').insert({
++        user_id: adminId,
++        title: `¨ßÎÂ ¦Ô¦¦¦-TÌ TÀ¦-¦¦¦+¦¦¦-¦¬TÏ: ${person.name}`,
++        body: person.type === 'student' ? '¦ã TÃTÇ¦¦¦-¦¬¦¦¦- TÁ¦¦¦¦¦-¦+¦-TÏ ¦+¦¦¦-TÌ TÀ¦-¦¦¦+¦¦¦-¦¬TÏ' : '¦ã ¦¬TÀ¦¦¦¬¦-¦+¦-¦-¦-TÂ¦¦¦¬TÏ TÁ¦¦¦¦¦-¦+¦-TÏ ¦+¦¦¦-TÌ TÀ¦-¦¦¦+¦¦¦-¦¬TÏ',
++        type: 'birthday',
++        link: person.link,
++      })
++      if (!error) inserted++
++    }
++  }
++
++  return NextResponse.json({ inserted })
++}
++
++export const dynamic = 'force-dynamic'
