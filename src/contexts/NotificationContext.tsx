@@ -1,0 +1,146 @@
+'use client'
+
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react'
+import { createClient } from '@/utils/supabase/client'
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
+
+type NotificationType = 'task_new' | 'task_completed' | 'lesson_new' | 'lesson_updated' | 'lesson_cancelled' | 'birthday'
+
+interface Notification {
+  id: string
+  user_id: string
+  title: string
+  body: string | null
+  type: NotificationType
+  link: string | null
+  is_read: boolean
+  created_at: string
+}
+
+interface Toast {
+  id: string
+  title: string
+  body: string | null
+  type: NotificationType
+  link: string | null
+}
+
+interface NotificationContextValue {
+  notifications: Notification[]
+  unreadCount: number
+  toasts: Toast[]
+  markAsRead: (id: string) => Promise<void>
+  markAllAsRead: () => Promise<void>
+  dismissToast: (id: string) => void
+}
+
+const NotificationContext = createContext<NotificationContextValue | null>(null)
+
+export function NotificationProvider({ children }: { children: ReactNode }) {
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [toasts, setToasts] = useState<Toast[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
+  const supabase = useMemo(() => createClient(), [])
+  const toastsRef = useRef<Toast[]>([])
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id))
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }: { data: { user: import('@supabase/supabase-js').User | null } }) => {
+      if (user) setUserId(user.id)
+    })
+  }, [supabase])
+
+  // Load initial unread notifications
+  useEffect(() => {
+    if (!userId) return
+    supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_read', false)
+      .order('created_at', { ascending: false })
+      .limit(50)
+      .then(({ data }: { data: Notification[] | null }) => {
+        if (data) setNotifications(data)
+      })
+  }, [userId, supabase])
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!userId) return
+
+    const channel = supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload: RealtimePostgresChangesPayload<Notification>) => {
+          const newNotification = payload.new as Notification
+          setNotifications((prev) => [newNotification, ...prev])
+
+          const newToast: Toast = {
+            id: newNotification.id,
+            title: newNotification.title,
+            body: newNotification.body,
+            type: newNotification.type,
+            link: newNotification.link,
+          }
+          setToasts((prev) => {
+            const next = [newToast, ...prev].slice(0, 3)
+            toastsRef.current = next
+            return next
+          })
+
+          setTimeout(() => {
+            dismissToast(newNotification.id)
+          }, 5000)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [userId, supabase, dismissToast])
+
+  const markAsRead = useCallback(async (id: string) => {
+    await supabase.from('notifications').update({ is_read: true }).eq('id', id)
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+    )
+  }, [supabase])
+
+  const markAllAsRead = useCallback(async () => {
+    if (!userId) return
+    await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('user_id', userId)
+      .eq('is_read', false)
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
+  }, [userId, supabase])
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length
+
+  return (
+    <NotificationContext.Provider
+      value={{ notifications, unreadCount, toasts, markAsRead, markAllAsRead, dismissToast }}
+    >
+      {children}
+    </NotificationContext.Provider>
+  )
+}
+
+export function useNotifications() {
+  const ctx = useContext(NotificationContext)
+  if (!ctx) throw new Error('useNotifications must be used within NotificationProvider')
+  return ctx
+}
