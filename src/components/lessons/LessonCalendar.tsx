@@ -31,6 +31,7 @@ interface Props {
   role: string
   studentId?: string
   groupIds?: string[]
+  teacherId?: string
   onDayClick?: (dateStr: string) => void
 }
 
@@ -42,7 +43,7 @@ function addMinutes(time: string, minutes: number): string {
   return date.toTimeString().slice(0, 5)
 }
 
-export default function LessonCalendar({ role, studentId, groupIds, onDayClick }: Props) {
+export default function LessonCalendar({ role, studentId, groupIds, teacherId, onDayClick }: Props) {
   const [lessons, setLessons] = useState<CalendarLesson[]>([])
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week')
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
@@ -127,7 +128,8 @@ export default function LessonCalendar({ role, studentId, groupIds, onDayClick }
       room:rooms!room_id(name)
     `).gte('lesson_date', startDate).lte('lesson_date', endDate).order('lesson_date').order('start_time')
 
-    if (filterTeacherId) query = query.eq('teacher_id', filterTeacherId)
+    if (teacherId) query = query.eq('teacher_id', teacherId)
+    else if (filterTeacherId) query = query.eq('teacher_id', filterTeacherId)
     if (filterRoomId) query = query.eq('room_id', filterRoomId)
     if (filterStudentId) {
       const groupsOfStudent = await supabase.from('group_students').select('group_id').eq('student_id', filterStudentId)

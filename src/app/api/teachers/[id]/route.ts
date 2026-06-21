@@ -17,6 +17,7 @@ export async function PATCH(
 
     const updates: any = {}
     if (body.full_name !== undefined) updates.full_name = body.full_name
+    if (body.phone !== undefined) updates.phone = body.phone
     if (body.color !== undefined) updates.color = body.color
 
     if (Object.keys(updates).length > 0) {

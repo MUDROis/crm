@@ -121,8 +121,10 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
   }
 
   const goToTeacher = () => {
-    const basePath = role === 'teacher' ? '/teacher/students' : '/admin/teachers'
-    router.push(basePath)
+    if (lesson.teacher_id) {
+      const basePath = '/admin/teachers'
+      router.push(`${basePath}/${lesson.teacher_id}`)
+    }
     onClose()
   }
 

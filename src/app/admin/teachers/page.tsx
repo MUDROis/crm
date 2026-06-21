@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import TeacherForm from '@/components/teachers/TeacherForm'
 
@@ -12,6 +13,7 @@ interface Teacher {
 }
 
 export default function TeachersPage() {
+  const router = useRouter()
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -99,7 +101,7 @@ export default function TeachersPage() {
         <tbody>
           {teachers.map((t) => (
             <tr key={t.id}>
-              <td className="border p-2">{t.full_name || '—'}</td>
+              <td className="border p-2"><button onClick={() => router.push(`/admin/teachers/${t.id}`)} className="text-blue-600 hover:underline text-left">{t.full_name || '—'}</button></td>
               <td className="border p-2">{t.email}</td>
               <td className="border p-2 space-x-2">
                 <button onClick={() => handleEdit(t)} className="text-blue-600 hover:underline">Ред.</button>

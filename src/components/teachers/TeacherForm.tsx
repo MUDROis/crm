@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { isValidEmail } from '@/utils/validation'
+import { isValidEmail, isValidPhone } from '@/utils/validation'
 
 interface Teacher {
   id: string
   email: string
   full_name: string
+  phone?: string | null
   color?: string | null
   status?: string
 }
@@ -23,25 +24,28 @@ export default function TeacherForm({
   const [form, setForm] = useState({
     email: teacher?.email || '',
     full_name: teacher?.full_name || '',
+    phone: teacher?.phone || '',
     password: '',
     color: teacher?.color || '#3B82F6',
     status: teacher?.status || 'active',
   })
   const [loading, setLoading] = useState(false)
   const [emailError, setEmailError] = useState('')
+  const [phoneError, setPhoneError] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
     if (name === 'email') setEmailError('')
+    if (name === 'phone') setPhoneError('')
   }
 
   const validateEmail = () => {
-    if (!form.email) {
+    if (!teacher?.id && !form.email) {
       setEmailError('Email обязателен')
       return false
     }
-    if (!isValidEmail(form.email)) {
+    if (form.email && !isValidEmail(form.email)) {
       setEmailError('Некорректный email')
       return false
     }
@@ -61,6 +65,7 @@ export default function TeacherForm({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             full_name: form.full_name,
+            phone: form.phone || null,
             color: form.color,
             ...(form.password && { password: form.password }),
           }),
@@ -78,6 +83,7 @@ export default function TeacherForm({
             email: form.email,
             password: form.password,
             full_name: form.full_name,
+            phone: form.phone || null,
             color: form.color,
           }),
         })
@@ -102,24 +108,28 @@ export default function TeacherForm({
           {teacher ? 'Редактировать преподавателя' : 'Новый преподаватель'}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-3">
-          {!teacher && (
-            <div>
-              <label className="block text-sm">Email *</label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                onBlur={validateEmail}
-                required
-                className={`w-full border p-2 rounded ${emailError ? 'border-red-500' : ''}`}
-              />
-              {emailError && <p className="text-red-500 text-xs mt-1">{emailError}</p>}
-            </div>
-          )}
           <div>
             <label className="block text-sm">Полное имя</label>
             <input type="text" name="full_name" value={form.full_name} onChange={handleChange} className="w-full border p-2 rounded" />
+          </div>
+          <div>
+            <label className="block text-sm">Телефон</label>
+            <input type="tel" name="phone" value={form.phone} onChange={handleChange} onBlur={() => { if (form.phone && !isValidPhone(form.phone)) setPhoneError('Некорректный номер'); else setPhoneError('') }} className={`w-full border p-2 rounded ${phoneError ? 'border-red-500' : ''}`} />
+            {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
+          </div>
+          <div>
+            <label className="block text-sm">Email {!teacher ? '*' : ''}</label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              onBlur={validateEmail}
+              required={!teacher}
+              readOnly={!!teacher}
+              className={`w-full border p-2 rounded ${emailError ? 'border-red-500' : ''} ${teacher ? 'bg-gray-100' : ''}`}
+            />
+            {emailError && <p className="text-red-500 text-xs mt-1">{emailError}</p>}
           </div>
           <div>
             <label className="block text-sm">Цвет индикатора</label>
