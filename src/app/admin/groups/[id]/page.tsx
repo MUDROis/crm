@@ -57,11 +57,11 @@ export default function GroupProfilePage() {
     loadGroup()
   }
 
-  if (!group) return <div className="p-6">Р—Р°РіСЂСѓР·РєР°...</div>
+  if (!group) return <div className="p-6">Загрузка...</div>
 
   return (
     <div className="p-6">
-      <button onClick={() => router.push('/admin/groups')} className="text-brand-600 mb-4 inline-block">в†ђ РќР°Р·Р°Рґ Рє РіСЂСѓРїРїР°Рј</button>
+      <button onClick={() => router.push('/admin/groups')} className="text-brand-600 mb-4 inline-block">← Назад к группам</button>
 
       <div className="bg-white rounded shadow p-6 mb-6">
         <div className="flex justify-between items-start">
@@ -71,25 +71,25 @@ export default function GroupProfilePage() {
                 {group.name}
               </button>
             </div>
-            <p className="text-gray-600 mt-1">{group.subject || 'Р‘РµР· РїСЂРµРґРјРµС‚Р°'}</p>
+            <p className="text-gray-600 mt-1">{group.subject || 'Без предмета'}</p>
             {group.teacher && (
-              <p className="text-gray-600">РџСЂРµРїРѕРґР°РІР°С‚РµР»СЊ: {group.teacher.full_name}</p>
+              <p className="text-gray-600">Преподаватель: {group.teacher.full_name}</p>
             )}
             {group.online_link && (
               <p className="text-sm mt-1">
-                <a href={group.online_link} target="_blank" className="text-brand-600 underline">РЎСЃС‹Р»РєР° РЅР° РѕРЅР»Р°Р№РЅ-СѓСЂРѕРє</a>
+                <a href={group.online_link} target="_blank" className="text-brand-600 underline">Ссылка на онлайн-урок</a>
               </p>
             )}
             <p className="text-sm mt-2">
-              РЎС‚Р°С‚СѓСЃ:{' '}
+              Статус:{' '}
               <span className={`font-semibold ${group.status === 'active' ? 'text-success' : 'text-gray-600'}`}>
-                {group.status === 'active' ? 'РђРєС‚РёРІРЅР°СЏ' : 'РђСЂС…РёРІРЅР°СЏ'}
+                {group.status === 'active' ? 'Активная' : 'Архивная'}
               </span>
             </p>
           </div>
           <button onClick={() => { setSelectedDate(new Date().toISOString().split('T')[0]); setShowNewLessonForm(true) }}
             className="bg-success text-white px-4 py-2 rounded hover:bg-success">
-            + РќРѕРІС‹Р№ СѓСЂРѕРє
+            + Новый урок
           </button>
         </div>
       </div>
@@ -99,14 +99,14 @@ export default function GroupProfilePage() {
       </div>
 
       <div className="flex gap-4 mb-6">
-        <button onClick={() => setTab('students')} className={`px-4 py-2 rounded ${tab === 'students' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>РЈС‡РµРЅРёРєРё</button>
-        <button onClick={() => setTab('comments')} className={`px-4 py-2 rounded ${tab === 'comments' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>РљРѕРјРјРµРЅС‚Р°СЂРёРё</button>
+        <button onClick={() => setTab('students')} className={`px-4 py-2 rounded ${tab === 'students' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>Ученики</button>
+        <button onClick={() => setTab('comments')} className={`px-4 py-2 rounded ${tab === 'comments' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>Комментарии</button>
       </div>
 
       <div className="bg-white rounded shadow p-6">
         {tab === 'students' && (
           groupStudents.length === 0
-            ? <p className="text-gray-500">РќРµС‚ СѓС‡РµРЅРёРєРѕРІ</p>
+            ? <p className="text-gray-500">Нет учеников</p>
             : <div className="space-y-2">
                 {groupStudents.map((s: any) => (
                   <div key={s.id} className="flex justify-between items-center border rounded px-4 py-2">
@@ -114,7 +114,7 @@ export default function GroupProfilePage() {
                       <span className="font-medium">{s.full_name}</span>
                       {s.subject && <span className="text-gray-500 text-sm ml-2">({s.subject})</span>}
                     </div>
-                    <button onClick={() => router.push(`/admin/students/${s.id}`)} className="text-brand-600 hover:underline text-sm">РџСЂРѕС„РёР»СЊ</button>
+                    <button onClick={() => router.push(`/admin/students/${s.id}`)} className="text-brand-600 hover:underline text-sm">Профиль</button>
                   </div>
                 ))}
               </div>

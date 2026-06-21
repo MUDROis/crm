@@ -34,28 +34,28 @@ export default function TeacherStudentProfilePage() {
     if (data) setGroupIds(data.map((g: any) => g.group_id))
   }
 
-  if (!student) return <div className="p-6">Р—Р°РіСЂСѓР·РєР°...</div>
+  if (!student) return <div className="p-6">Загрузка...</div>
 
   return (
     <div className="p-6">
-      {/* РРЅС„РѕСЂРјР°С†РёСЏ РѕР± СѓС‡РµРЅРёРєРµ (С‚РѕР»СЊРєРѕ С‡С‚РµРЅРёРµ) */}
+      {/* Информация об ученике (только чтение) */}
       <div className="bg-white rounded shadow p-6 mb-6">
         <div className="text-2xl font-bold">{student.full_name}</div>
         <p className="text-gray-600 mt-1">
-          {student.subject} В· {student.type === 'individual' ? 'РРЅРґРёРІРёРґСѓР°Р»СЊРЅРѕ' : 'Р“СЂСѓРїРїР°'}
+          {student.subject} · {student.type === 'individual' ? 'Индивидуально' : 'Группа'}
         </p>
         {student.teacher && (
-          <p className="text-gray-600">РџСЂРµРїРѕРґР°РІР°С‚РµР»СЊ: {student.teacher.full_name}</p>
+          <p className="text-gray-600">Преподаватель: {student.teacher.full_name}</p>
         )}
         <p className="text-sm mt-2">
-          РЎС‚Р°С‚СѓСЃ: <span className={`font-semibold ${student.status === 'active' ? 'text-success' : student.status === 'paused' ? 'text-warning' : student.status === 'stopped' ? 'text-danger' : 'text-gray-600'}`}>
-            {student.status === 'active' ? 'РђРєС‚РёРІРЅС‹Р№' : student.status === 'paused' ? 'РџСЂРёРѕСЃС‚Р°РЅРѕРІР»РµРЅ' : student.status === 'stopped' ? 'Р‘СЂРѕСЃРёР»' : 'РђСЂС…РёРІРЅС‹Р№'}
+          Статус: <span className={`font-semibold ${student.status === 'active' ? 'text-success' : student.status === 'paused' ? 'text-warning' : student.status === 'stopped' ? 'text-danger' : 'text-gray-600'}`}>
+            {student.status === 'active' ? 'Активный' : student.status === 'paused' ? 'Приостановлен' : student.status === 'stopped' ? 'Бросил' : 'Архивный'}
           </span>
         </p>
         {student.notes && <p className="text-sm text-gray-500 mt-2">{student.notes}</p>}
       </div>
 
-      {/* Р Р°СЃРїРёСЃР°РЅРёРµ СѓС‡РµРЅРёРєР° (РїСЂРµРїРѕРґР°РІР°С‚РµР»СЊ РІРёРґРёС‚, РјРѕР¶РµС‚ РѕС‚РєСЂС‹РІР°С‚СЊ СѓСЂРѕРєРё) */}
+      {/* Расписание ученика (преподаватель видит, может открывать уроки) */}
       <div className="bg-white rounded shadow p-6">
         <LessonCalendar
           role="teacher"

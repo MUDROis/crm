@@ -145,13 +145,36 @@ export default function StudentForm({
               <input name="full_name" value={form.full_name} onChange={handleChange} required className="w-full border p-2 rounded" />
             </div>
             <div>
-              <label className="block text-sm">Телефон</label>
-              <input name="phone" value={form.phone} onChange={handleChange} onBlur={handleBlur} className={`w-full border p-2 rounded ${errors.phone ? 'border-red-500' : ''}`} />
+              <label className="block text-sm font-medium text-gray-700">Телефон</label>
+              <div className="relative">
+                <input
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full border p-2 rounded-lg ${errors.phone ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-brand-500'}`}
+                />
+                {errors.phone && (
+                  <div className="absolute right-3 top-2.5 text-red-500">⚠️</div>
+                )}
+              </div>
               {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
             </div>
             <div>
-              <label className="block text-sm">Email</label>
-              <input name="email" type="email" value={form.email} onChange={handleChange} onBlur={handleBlur} className={`w-full border p-2 rounded ${errors.email ? 'border-red-500' : ''}`} />
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <div className="relative">
+                <input
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full border p-2 rounded-lg ${errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-brand-500'}`}
+                />
+                {errors.email && (
+                  <div className="absolute right-3 top-2.5 text-red-500">⚠️</div>
+                )}
+              </div>
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
             </div>
             <div>
@@ -188,8 +211,19 @@ export default function StudentForm({
               <input name="customer_name" value={form.customer_name} onChange={handleChange} className="w-full border p-2 rounded" />
             </div>
             <div>
-              <label className="block text-sm">Контакты заказчика</label>
-              <input name="customer_contact" value={form.customer_contact} onChange={handleChange} onBlur={handleBlur} className={`w-full border p-2 rounded ${errors.customer_contact ? 'border-red-500' : ''}`} />
+              <label className="block text-sm font-medium text-gray-700">Контакты заказчика</label>
+              <div className="relative">
+                <input
+                  name="customer_contact"
+                  value={form.customer_contact}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full border p-2 rounded-lg ${errors.customer_contact ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-brand-500'}`}
+                />
+                {errors.customer_contact && (
+                  <div className="absolute right-3 top-2.5 text-red-500">⚠️</div>
+                )}
+              </div>
               {errors.customer_contact && <p className="text-red-500 text-xs mt-1">{errors.customer_contact}</p>}
             </div>
             <div className="col-span-2">
@@ -230,8 +264,20 @@ export default function StudentForm({
             )}
             <div className="flex space-x-3">
               <button type="button" onClick={onClose} className="px-4 py-2 border rounded">Отмена</button>
-              <button type="submit" disabled={loading} className="px-4 py-2 bg-brand-600 text-white rounded disabled:opacity-50">
-                {loading ? 'Сохранение...' : 'Сохранить'}
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Сохранение...
+                  </>
+                ) : 'Сохранить'}
               </button>
             </div>
           </div>
