@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import Modal from '@/components/ui/Modal'
 
 interface Lesson {
   id: string
@@ -116,55 +117,34 @@ export default function StudentInfoModal({ studentId, onClose }: { studentId: st
     }
   }
 
-  // Рендер состояния загрузки
   if (loading && !error) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-lg">
-          <div className="flex items-center gap-3">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-600"></div>
-            <span>Загрузка...</span>
-          </div>
+      <Modal isOpen onClose={onClose} title="Загрузка...">
+        <div className="flex items-center gap-3">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-600"></div>
         </div>
-      </div>
+      </Modal>
     )
   }
 
-  // Рендер состояния ошибки
   if (error) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-lg max-w-md">
-          <h3 className="text-lg font-bold mb-2 text-danger">Ошибка</h3>
-          <p className="mb-4">{error}</p>
-          <button onClick={onClose} className="px-4 py-2 bg-brand-600 text-white rounded">
-            Закрыть
-          </button>
-        </div>
-      </div>
+      <Modal isOpen onClose={onClose} title="Ошибка">
+        <p className="text-danger">{error}</p>
+      </Modal>
     )
   }
 
   if (!student) return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg">
-        <p>Ученик не найден</p>
-        <button onClick={onClose} className="mt-2 px-4 py-2 border rounded">Закрыть</button>
-      </div>
-    </div>
+    <Modal isOpen onClose={onClose} title="Ученик">
+      <p>Ученик не найден</p>
+    </Modal>
   )
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h2 className="text-2xl font-bold">{student.full_name}</h2>
-            <p className="text-gray-600">{student.subject} • {student.type === 'individual' ? 'Индивидуально' : 'Группа'}</p>
-            {student.teacher && <p className="text-gray-600">Преподаватель: {student.teacher.full_name}</p>}
-          </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl">&times;</button>
-        </div>
+    <Modal isOpen onClose={onClose} title={student.full_name} maxWidth="4xl">
+        <p className="text-gray-600">{student.subject} • {student.type === 'individual' ? 'Индивидуально' : 'Группа'}</p>
+        {student.teacher && <p className="text-gray-600 mb-4">Преподаватель: {student.teacher.full_name}</p>}
 
         {/* Вкладки */}
         <div className="flex gap-4 mb-6">
@@ -244,7 +224,6 @@ export default function StudentInfoModal({ studentId, onClose }: { studentId: st
             )}
           </div>
         )}
-      </div>
-    </div>
+    </Modal>
   )
 }

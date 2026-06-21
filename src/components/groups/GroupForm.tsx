@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import Modal from '@/components/ui/Modal'
 
 interface Group {
   id?: string
@@ -142,9 +143,7 @@ export default function GroupForm({
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white p-6 rounded-lg w-full max-w-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <h2 className="text-xl font-bold mb-4">{form.id ? 'Редактировать группу' : 'Новая группа'}</h2>
+    <Modal isOpen onClose={onClose} title={form.id ? 'Редактировать группу' : 'Новая группа'} maxWidth="xl">
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-sm">Название *</label>
@@ -225,7 +224,6 @@ export default function GroupForm({
             </div>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   )
 }

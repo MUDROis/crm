@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { isValidEmail, isValidPhone } from '@/utils/validation'
+import Modal from '@/components/ui/Modal'
 
 interface Teacher {
   id: string
@@ -102,11 +103,7 @@ export default function TeacherForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-white p-6 rounded-lg w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold mb-4">
-          {teacher ? 'Редактировать преподавателя' : 'Новый преподаватель'}
-        </h2>
+    <Modal isOpen onClose={onClose} title={teacher ? 'Редактировать преподавателя' : 'Новый преподаватель'} maxWidth="md">
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-sm">Полное имя</label>
@@ -165,7 +162,6 @@ export default function TeacherForm({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   )
 }

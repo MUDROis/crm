@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { updateSubscriptionUsage } from '@/utils/subscriptions'
+import Modal from '@/components/ui/Modal'
 
 // Переименовываем, чтобы не конфликтовать с LessonData из LessonCardModal
 interface LessonFormData {
@@ -314,11 +315,7 @@ export default function LessonForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-white p-6 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-xl font-bold mb-4">
-          {prefillData ? 'Новый урок (перенос)' : form.id ? 'Редактировать урок' : 'Новый урок'}
-        </h2>
+    <Modal isOpen onClose={onClose} title={prefillData ? 'Новый урок (перенос)' : form.id ? 'Редактировать урок' : 'Новый урок'} maxWidth="2xl">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -481,7 +478,6 @@ export default function LessonForm({
             </div>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   )
 }

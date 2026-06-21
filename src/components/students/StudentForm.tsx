@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { isValidEmail, isValidPhone } from '@/utils/validation'
+import Modal from '@/components/ui/Modal'
 
 interface Student {
   id?: string
@@ -136,9 +137,7 @@ export default function StudentForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-white p-6 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-xl font-bold mb-4">{form.id ? 'Редактировать ученика' : 'Новый ученик'}</h2>
+    <Modal isOpen onClose={onClose} title={form.id ? 'Редактировать ученика' : 'Новый ученик'} maxWidth="2xl">
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -237,7 +236,6 @@ export default function StudentForm({
             </div>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   )
 }

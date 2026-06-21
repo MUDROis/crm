@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import LessonForm from '@/components/lessons/LessonForm'
+import Modal from '@/components/ui/Modal'
 
 interface LessonData {
   id: string
@@ -55,11 +56,6 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
         return `${mins} мин.`
       })()
     : ''
-
-  const handleOverlayClick = () => {
-    if (editing) setEditing(false)
-    else onClose()
-  }
 
   const handleCancelLesson = async () => {
     if (!confirm('Отменить урок?')) return
@@ -130,46 +126,38 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
 
   if (editing) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={handleOverlayClick}>
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
-          <LessonForm
-            lesson={{
-              id: lesson.id,
-              lesson_date: lesson.lesson_date,
-              start_time: lesson.start_time,
-              end_time: lesson.end_time,
-              type: lesson.type as 'individual' | 'group',
-              student_id: lesson.student_id,
-              group_id: lesson.group_id,
-              teacher_id: lesson.teacher_id || '',
-              online_link: lesson.online_link,
-              comment: lesson.comment,
-              status: lesson.status,
-              subject_id: lesson.subject_id,
-              room_id: lesson.room_id,
-            }}
-            role={role}
-            onClose={() => setEditing(false)}
-            onSaved={() => { onUpdate(); onClose() }}
-            onConduct={handleConduct}
-            onDelete={handleDelete}
-            onPostpone={handlePostpone}
-            showDeleteButton={true}
-            showPostponeButton={true}
-            showConductButton={true}
-            showSaveButton={true}
-          />
-        </div>
-      </div>
+      <LessonForm
+        lesson={{
+          id: lesson.id,
+          lesson_date: lesson.lesson_date,
+          start_time: lesson.start_time,
+          end_time: lesson.end_time,
+          type: lesson.type as 'individual' | 'group',
+          student_id: lesson.student_id,
+          group_id: lesson.group_id,
+          teacher_id: lesson.teacher_id || '',
+          online_link: lesson.online_link,
+          comment: lesson.comment,
+          status: lesson.status,
+          subject_id: lesson.subject_id,
+          room_id: lesson.room_id,
+        }}
+        role={role}
+        onClose={() => setEditing(false)}
+        onSaved={() => { onUpdate(); onClose() }}
+        onConduct={handleConduct}
+        onDelete={handleDelete}
+        onPostpone={handlePostpone}
+        showDeleteButton={true}
+        showPostponeButton={true}
+        showConductButton={true}
+        showSaveButton={true}
+      />
     )
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={handleOverlayClick}>
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6" onClick={e => e.stopPropagation()}>
-        <h2 className="text-xl font-bold mb-4">
-          {statusLabel} – {lesson.type === 'individual' ? 'Индивидуальный' : 'Групповой'}
-        </h2>
+    <Modal isOpen onClose={onClose} title={`${statusLabel} – ${lesson.type === 'individual' ? 'Индивидуальный' : 'Групповой'}`} maxWidth="lg">
 
         <div className="space-y-3 text-sm">
           <div>
@@ -238,7 +226,6 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
             Открыть ✓
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
