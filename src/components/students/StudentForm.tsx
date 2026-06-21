@@ -18,6 +18,7 @@ interface Student {
   notes: string
   online_link: string
   status: string
+  birth_date: string
 }
 
 interface Teacher {
@@ -47,6 +48,7 @@ export default function StudentForm({
       notes: '',
       online_link: '',
       status: 'active',
+      birth_date: '',
     }
   )
   const [teachers, setTeachers] = useState<Teacher[]>([])
@@ -143,6 +145,10 @@ export default function StudentForm({
             <div>
               <label className="block text-sm">ФИО *</label>
               <input name="full_name" value={form.full_name} onChange={handleChange} required className="w-full border p-2 rounded" />
+            </div>
+            <div>
+              <label className="block text-sm">Дата рождения</label>
+              <input type="date" name="birth_date" value={form.birth_date} onChange={handleChange} className="w-full border p-2 rounded" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Телефон</label>

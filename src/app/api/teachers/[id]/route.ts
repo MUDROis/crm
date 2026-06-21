@@ -19,6 +19,7 @@ export async function PATCH(
     if (body.full_name !== undefined) updates.full_name = body.full_name
     if (body.phone !== undefined) updates.phone = body.phone
     if (body.color !== undefined) updates.color = body.color
+    if (body.birth_date !== undefined) updates.birth_date = body.birth_date
 
     if (Object.keys(updates).length > 0) {
       const { error } = await supabaseAdmin

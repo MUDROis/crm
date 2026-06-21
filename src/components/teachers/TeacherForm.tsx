@@ -11,6 +11,7 @@ interface Teacher {
   phone?: string | null
   color?: string | null
   status?: string
+  birth_date?: string | null
 }
 
 export default function TeacherForm({
@@ -29,6 +30,7 @@ export default function TeacherForm({
     password: '',
     color: teacher?.color || '#3B82F6',
     status: teacher?.status || 'active',
+    birth_date: teacher?.birth_date || '',
   })
   const [loading, setLoading] = useState(false)
   const [emailError, setEmailError] = useState('')
@@ -68,6 +70,7 @@ export default function TeacherForm({
             full_name: form.full_name,
             phone: form.phone || null,
             color: form.color,
+            birth_date: form.birth_date || null,
             ...(form.password && { password: form.password }),
           }),
         })
@@ -86,6 +89,7 @@ export default function TeacherForm({
             full_name: form.full_name,
             phone: form.phone || null,
             color: form.color,
+            birth_date: form.birth_date || null,
           }),
         })
         if (!res.ok) {
@@ -108,6 +112,10 @@ export default function TeacherForm({
           <div>
             <label className="block text-sm">Полное имя</label>
             <input type="text" name="full_name" value={form.full_name} onChange={handleChange} className="w-full border p-2 rounded" />
+          </div>
+          <div>
+            <label className="block text-sm">Дата рождения</label>
+            <input type="date" name="birth_date" value={form.birth_date} onChange={handleChange} className="w-full border p-2 rounded" />
           </div>
           <div>
             <label className="block text-sm">Телефон</label>

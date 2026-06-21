@@ -11,6 +11,7 @@ interface Teacher {
   email: string
   full_name: string
   status: string
+  birth_date?: string | null
 }
 
 export default function TeachersPage() {
@@ -28,7 +29,7 @@ export default function TeachersPage() {
 
   async function loadTeachers() {
     setLoading(true)
-    let query = supabase.from('profiles').select('id, email, full_name, status').eq('role', 'teacher')
+    let query = supabase.from('profiles').select('id, email, full_name, status, birth_date').eq('role', 'teacher')
     if (filterStatus === 'active') query = query.eq('status', 'active')
     else if (filterStatus === 'archived') query = query.eq('status', 'archived')
     const { data, error } = await query.order('full_name')

@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, full_name, phone, color } = body
+    const { email, password, full_name, phone, color, birth_date } = body
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email и пароль обязательны' }, { status: 400 })
@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
         full_name: full_name || null,
         phone: phone || null,
         color: color || null,
+        birth_date: birth_date || null,
       })
       .eq('id', userId)
 
