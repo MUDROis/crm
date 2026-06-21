@@ -200,7 +200,7 @@ export default function GroupForm({
                   {groupStudents.map((s) => (
                     <div key={s.id} className="flex justify-between items-center border rounded px-3 py-2 text-sm">
                       <span>{s.full_name}</span>
-                      <button type="button" onClick={() => removeStudent(s.id)} className="text-red-600 hover:underline text-xs">Удалить</button>
+                      <button type="button" onClick={() => removeStudent(s.id)} className="text-danger hover:underline text-xs">Удалить</button>
                     </div>
                   ))}
                 </div>
@@ -213,13 +213,13 @@ export default function GroupForm({
           <div className="flex justify-between items-center pt-4">
             {form.id && (
               <button type="button" onClick={handleDelete} disabled={loading}
-                className="px-4 py-2 text-red-600 border border-red-600 rounded hover:bg-red-50 disabled:opacity-50">
+                className="px-4 py-2 text-danger border border-danger rounded hover:bg-red-50 disabled:opacity-50">
                 Удалить
               </button>
             )}
             <div className="flex space-x-3 ml-auto">
               <button type="button" onClick={onClose} className="px-4 py-2 border rounded">Отмена</button>
-              <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">
+              <button type="submit" disabled={loading} className="px-4 py-2 bg-brand-600 text-white rounded disabled:opacity-50">
                 {loading ? 'Сохранение...' : 'Сохранить'}
               </button>
             </div>

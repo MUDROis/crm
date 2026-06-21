@@ -55,40 +55,40 @@ export default function StudentProfilePage() {
     loadStudent()
   }
 
-  if (!student) return <div className="p-6">Загрузка...</div>
+  if (!student) return <div className="p-6">Р—Р°РіСЂСѓР·РєР°...</div>
 
   return (
     <div className="p-6">
-      {/* Шапка профиля */}
+      {/* РЁР°РїРєР° РїСЂРѕС„РёР»СЏ */}
       <div className="bg-white rounded shadow p-6 mb-6">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-bold">
-              <button onClick={() => setShowEditForm(true)} className="text-left hover:text-blue-600">
+              <button onClick={() => setShowEditForm(true)} className="text-left hover:text-brand-600">
                 {student.full_name}
               </button>
             </h1>
             <p className="text-gray-600 mt-1">
-              {student.subject} · {student.type === 'individual' ? 'Индивидуально' : 'Группа'}
+              {student.subject} В· {student.type === 'individual' ? 'РРЅРґРёРІРёРґСѓР°Р»СЊРЅРѕ' : 'Р“СЂСѓРїРїР°'}
             </p>
             {student.teacher && (
-              <p className="text-gray-600">Преподаватель: {student.teacher.full_name}</p>
+              <p className="text-gray-600">РџСЂРµРїРѕРґР°РІР°С‚РµР»СЊ: {student.teacher.full_name}</p>
             )}
             <p className="text-sm mt-2">
-              Статус: <span className={`font-semibold ${student.status === 'active' ? 'text-green-600' : student.status === 'paused' ? 'text-yellow-600' : student.status === 'stopped' ? 'text-red-600' : 'text-gray-600'}`}>
-                {student.status === 'active' ? 'Активный' : student.status === 'paused' ? 'Приостановлен' : student.status === 'stopped' ? 'Бросил' : 'Архивный'}
+              РЎС‚Р°С‚СѓСЃ: <span className={`font-semibold ${student.status === 'active' ? 'text-success' : student.status === 'paused' ? 'text-warning' : student.status === 'stopped' ? 'text-danger' : 'text-gray-600'}`}>
+                {student.status === 'active' ? 'РђРєС‚РёРІРЅС‹Р№' : student.status === 'paused' ? 'РџСЂРёРѕСЃС‚Р°РЅРѕРІР»РµРЅ' : student.status === 'stopped' ? 'Р‘СЂРѕСЃРёР»' : 'РђСЂС…РёРІРЅС‹Р№'}
               </span>
             </p>
             {student.notes && <p className="text-sm text-gray-500 mt-2">{student.notes}</p>}
           </div>
           <button onClick={() => { setSelectedDate(new Date().toISOString().split('T')[0]); setShowNewLessonForm(true) }}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-            + Новый урок
+            className="bg-success text-white px-4 py-2 rounded hover:bg-success">
+            + РќРѕРІС‹Р№ СѓСЂРѕРє
           </button>
         </div>
       </div>
 
-      {/* Расписание всегда сверху */}
+      {/* Р Р°СЃРїРёСЃР°РЅРёРµ РІСЃРµРіРґР° СЃРІРµСЂС…Сѓ */}
       <div className="bg-white rounded shadow p-6 mb-6">
         <LessonCalendar
           role="admin"
@@ -98,10 +98,10 @@ export default function StudentProfilePage() {
         />
       </div>
 
-      {/* Вкладки под расписанием */}
+      {/* Р’РєР»Р°РґРєРё РїРѕРґ СЂР°СЃРїРёСЃР°РЅРёРµРј */}
       <StudentTabs studentId={studentId} />
 
-      {/* Форма редактирования ученика */}
+      {/* Р¤РѕСЂРјР° СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ СѓС‡РµРЅРёРєР° */}
       {showEditForm && student && (
         <StudentForm
           student={student}
@@ -110,7 +110,7 @@ export default function StudentProfilePage() {
         />
       )}
 
-      {/* Форма нового урока */}
+      {/* Р¤РѕСЂРјР° РЅРѕРІРѕРіРѕ СѓСЂРѕРєР° */}
       {showNewLessonForm && selectedDate && (
         <LessonForm
           onClose={() => setShowNewLessonForm(false)}

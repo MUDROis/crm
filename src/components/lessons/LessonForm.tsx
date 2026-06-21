@@ -385,7 +385,7 @@ export default function LessonForm({
               {showNewSubject && (
                 <div className="flex gap-1 mt-1">
                   <input type="text" value={newSubjectName} onChange={(e) => setNewSubjectName(e.target.value)} placeholder="Название предмета" className="flex-1 border p-2 rounded" autoFocus />
-                  <button type="button" onClick={handleAddSubject} className="bg-green-600 text-white px-3 py-2 rounded text-sm">OK</button>
+                  <button type="button" onClick={handleAddSubject} className="bg-success text-white px-3 py-2 rounded text-sm">OK</button>
                 </div>
               )}
             </div>
@@ -408,7 +408,7 @@ export default function LessonForm({
               {showNewRoom && (
                 <div className="flex gap-1 mt-1">
                   <input type="text" value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)} placeholder="Название кабинета" className="flex-1 border p-2 rounded" autoFocus />
-                  <button type="button" onClick={handleAddRoom} className="bg-green-600 text-white px-3 py-2 rounded text-sm">OK</button>
+                  <button type="button" onClick={handleAddRoom} className="bg-success text-white px-3 py-2 rounded text-sm">OK</button>
                 </div>
               )}
             </div>
@@ -447,14 +447,14 @@ export default function LessonForm({
           <div className="flex justify-between pt-4">
             <div className="flex gap-2">
               {_showDelete && form.id && (
-                <button type="button" onClick={() => onDelete ? onDelete() : handleDelete()} disabled={loading} className="px-3 py-2 text-red-600 hover:bg-red-50 rounded" title="Удалить урок">
+                <button type="button" onClick={() => onDelete ? onDelete() : handleDelete()} disabled={loading} className="px-3 py-2 text-danger hover:bg-red-50 rounded" title="Удалить урок">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
               )}
               {_showPostpone && form.id && (
-                <button type="button" onClick={handlePostpone} disabled={loading} className="px-3 py-2 text-yellow-600 hover:bg-yellow-50 rounded" title="Перенести урок">
+                <button type="button" onClick={handlePostpone} disabled={loading} className="px-3 py-2 text-warning hover:bg-yellow-50 rounded" title="Перенести урок">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
@@ -474,7 +474,7 @@ export default function LessonForm({
                     const { id, ...data } = form
                     onConduct(data)
                   }
-                }} disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50">
+                }} disabled={loading} className="px-4 py-2 bg-success text-white rounded disabled:opacity-50">
                   Провести
                 </button>
               )}

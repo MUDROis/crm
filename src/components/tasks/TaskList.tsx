@@ -17,7 +17,7 @@ export default function TaskList({
   // Получаем userId для преподавателя
   useEffect(() => {
     if (role === 'teacher') {
-      supabase.auth.getUser().then(({ data }) => {
+      supabase.auth.getUser().then(({ data }: { data: { user: { id: string } | null } }) => {
         if (data.user) setUserId(data.user.id)
       })
     } else {
@@ -79,16 +79,16 @@ export default function TaskList({
             <td className="border p-2">{task.due_date || '-'}</td>
             <td className="border p-2 space-x-2">
               {role === 'teacher' && !task.completed && (
-                <button onClick={() => toggleComplete(task.id, task.completed)} className="text-green-600 hover:underline">Выполнено</button>
+                <button onClick={() => toggleComplete(task.id, task.completed)} className="text-success hover:underline">Выполнено</button>
               )}
               {role === 'teacher' && task.completed && (
-                <button onClick={() => toggleComplete(task.id, task.completed)} className="text-blue-600 hover:underline">Вернуть в работу</button>
+                <button onClick={() => toggleComplete(task.id, task.completed)} className="text-brand-600 hover:underline">Вернуть в работу</button>
               )}
               {role === 'admin' && onEdit && (
-                <button onClick={() => onEdit(task)} className="text-blue-600 hover:underline">Ред.</button>
+                <button onClick={() => onEdit(task)} className="text-brand-600 hover:underline">Ред.</button>
               )}
               {role === 'admin' && (
-                <button onClick={() => handleDelete(task.id)} className="text-red-600 hover:underline">Удал.</button>
+                <button onClick={() => handleDelete(task.id)} className="text-danger hover:underline">Удал.</button>
               )}
             </td>
           </tr>

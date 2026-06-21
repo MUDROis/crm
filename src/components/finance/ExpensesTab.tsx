@@ -16,9 +16,9 @@ export default function ExpensesTab() {
     return data || []
   })
 
-  const { data: categories } = useSupabaseQuery('expense-categories', async (supabase) => {
+  const { data: categories } = useSupabaseQuery<string[]>('expense-categories', async (supabase) => {
     const { data } = await supabase.from('expenses').select('category')
-    const cats = data?.map((e: any) => e.category).filter(Boolean) || []
+    const cats: string[] = data?.map((e: any) => e.category).filter(Boolean) || []
     return [...new Set(cats)].sort()
   })
 
@@ -69,7 +69,7 @@ export default function ExpensesTab() {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Расходы</h2>
-        <button onClick={handleAdd} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">+ Добавить</button>
+        <button onClick={handleAdd} className="bg-success text-white px-4 py-2 rounded hover:bg-success">+ Добавить</button>
       </div>
       <table className="w-full border-collapse">
         <thead>
@@ -89,8 +89,8 @@ export default function ExpensesTab() {
               <td className="border p-2">{e.amount}</td>
               <td className="border p-2">{e.description}</td>
               <td className="border p-2 space-x-2">
-                <button onClick={() => handleEdit(e)} className="text-blue-600 hover:underline">Ред.</button>
-                <button onClick={() => handleDelete(e.id)} className="text-red-600 hover:underline">Удал.</button>
+                <button onClick={() => handleEdit(e)} className="text-brand-600 hover:underline">Ред.</button>
+                <button onClick={() => handleDelete(e.id)} className="text-danger hover:underline">Удал.</button>
               </td>
             </tr>
           ))}
@@ -122,7 +122,7 @@ export default function ExpensesTab() {
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded">Отмена</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Сохранить</button>
+                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded">Сохранить</button>
               </div>
             </form>
           </div>

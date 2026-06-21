@@ -90,7 +90,7 @@ export default function StudentPausesTab({ studentId }: { studentId: string }) {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">Приостановки занятий</h3>
-        <button onClick={handleAdd} className="bg-green-600 text-white px-3 py-1 rounded">+ Добавить</button>
+        <button onClick={handleAdd} className="bg-success text-white px-3 py-1 rounded">+ Добавить</button>
       </div>
       {pauses?.length === 0 ? (
         <p>Нет периодов приостановки</p>
@@ -107,15 +107,15 @@ export default function StudentPausesTab({ studentId }: { studentId: string }) {
           <tbody>
             {pauses?.map((pause: any) => (
               <tr key={pause.id}>
-                <td className="border p-2 cursor-pointer hover:text-blue-600" onClick={() => handleEdit(pause)}>
+                <td className="border p-2 cursor-pointer hover:text-brand-600" onClick={() => handleEdit(pause)}>
                   {pause.start_date}
                 </td>
-                <td className="border p-2 cursor-pointer hover:text-blue-600" onClick={() => handleEdit(pause)}>
+                <td className="border p-2 cursor-pointer hover:text-brand-600" onClick={() => handleEdit(pause)}>
                   {pause.end_date}
                 </td>
                 <td className="border p-2">{pause.reason || '-'}</td>
                 <td className="border p-2">
-                  <button onClick={() => handleDelete(pause.id)} className="text-red-600 hover:underline">Удалить</button>
+                  <button onClick={() => handleDelete(pause.id)} className="text-danger hover:underline">Удалить</button>
                 </td>
               </tr>
             ))}
@@ -141,7 +141,7 @@ export default function StudentPausesTab({ studentId }: { studentId: string }) {
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button type="button" onClick={handleClose} className="px-4 py-2 border rounded">Отмена</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Сохранить</button>
+                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded">Сохранить</button>
               </div>
             </form>
           </div>

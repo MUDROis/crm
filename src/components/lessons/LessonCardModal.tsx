@@ -185,7 +185,7 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
           {lesson.online_link && (
             <div>
               <span className="font-semibold">Ссылка:</span>{' '}
-              <a href={lesson.online_link} target="_blank" className="text-blue-600 underline">
+              <a href={lesson.online_link} target="_blank" className="text-brand-600 underline">
                 Открыть
               </a>
             </div>
@@ -193,7 +193,7 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
           <div>
             <span className="font-semibold">Педагог:</span>{' '}
             {lesson.teacher?.full_name ? (
-              <span className="cursor-pointer text-blue-600 hover:underline" onClick={goToTeacher}>
+              <span className="cursor-pointer text-brand-600 hover:underline" onClick={goToTeacher}>
                 {lesson.teacher.full_name}
               </span>
             ) : 'Не назначен'}
@@ -207,13 +207,13 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
             <span className="font-semibold">Участники:</span>{' '}
             {lesson.type === 'individual' ? (
               lesson.student?.full_name ? (
-                <span className="cursor-pointer text-blue-600 hover:underline" onClick={goToStudent}>
+                <span className="cursor-pointer text-brand-600 hover:underline" onClick={goToStudent}>
                   {lesson.student.full_name}
                 </span>
               ) : '—'
             ) : (
               lesson.group?.name ? (
-                <span className="cursor-pointer text-blue-600 hover:underline" onClick={goToGroup}>
+                <span className="cursor-pointer text-brand-600 hover:underline" onClick={goToGroup}>
                   {lesson.group.name}
                 </span>
               ) : '—'
@@ -231,10 +231,10 @@ export default function LessonCardModal({ lesson, role, onClose, onUpdate }: Pro
           <button onClick={handleCancelLesson} className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
             Отменить ✕
           </button>
-          <button onClick={handleConductFromView} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+          <button onClick={handleConductFromView} className="px-4 py-2 bg-success text-white rounded hover:bg-success">
             Провести
           </button>
-          <button onClick={() => setEditing(true)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          <button onClick={() => setEditing(true)} className="px-4 py-2 bg-brand-600 text-white rounded hover:bg-brand-700">
             Открыть ✓
           </button>
         </div>

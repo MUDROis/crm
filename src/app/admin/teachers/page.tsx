@@ -79,15 +79,15 @@ export default function TeachersPage() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Преподаватели</h1>
-        <button onClick={handleAdd} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        <button onClick={handleAdd} className="bg-success text-white px-4 py-2 rounded hover:bg-success">
           + Добавить преподавателя
         </button>
       </div>
 
       <div className="flex gap-2 mb-4">
-        <button onClick={() => setFilterStatus('active')} className={`px-3 py-2 rounded ${filterStatus === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Активные</button>
-        <button onClick={() => setFilterStatus('archived')} className={`px-3 py-2 rounded ${filterStatus === 'archived' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Архив</button>
-        <button onClick={() => setFilterStatus('all')} className={`px-3 py-2 rounded ${filterStatus === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Все</button>
+        <button onClick={() => setFilterStatus('active')} className={`px-3 py-2 rounded ${filterStatus === 'active' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>Активные</button>
+        <button onClick={() => setFilterStatus('archived')} className={`px-3 py-2 rounded ${filterStatus === 'archived' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>Архив</button>
+        <button onClick={() => setFilterStatus('all')} className={`px-3 py-2 rounded ${filterStatus === 'all' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>Все</button>
       </div>
 
       <table className="w-full border-collapse">
@@ -101,16 +101,16 @@ export default function TeachersPage() {
         <tbody>
           {teachers.map((t) => (
             <tr key={t.id}>
-              <td className="border p-2"><button onClick={() => router.push(`/admin/teachers/${t.id}`)} className="text-blue-600 hover:underline text-left">{t.full_name || '—'}</button></td>
+              <td className="border p-2"><button onClick={() => router.push(`/admin/teachers/${t.id}`)} className="text-brand-600 hover:underline text-left">{t.full_name || '—'}</button></td>
               <td className="border p-2">{t.email}</td>
               <td className="border p-2 space-x-2">
-                <button onClick={() => handleEdit(t)} className="text-blue-600 hover:underline">Ред.</button>
+                <button onClick={() => handleEdit(t)} className="text-brand-600 hover:underline">Ред.</button>
                 {t.status === 'archived' ? (
-                  <button onClick={() => handleRestore(t.id)} className="text-green-600 hover:underline">Восстановить</button>
+                  <button onClick={() => handleRestore(t.id)} className="text-success hover:underline">Восстановить</button>
                 ) : (
-                  <button onClick={() => handleArchive(t.id)} className="text-red-600 hover:underline">В архив</button>
+                  <button onClick={() => handleArchive(t.id)} className="text-danger hover:underline">В архив</button>
                 )}
-                <button onClick={() => handleDelete(t.id)} className="text-red-600 hover:underline">Удалить</button>
+                <button onClick={() => handleDelete(t.id)} className="text-danger hover:underline">Удалить</button>
               </td>
             </tr>
           ))}

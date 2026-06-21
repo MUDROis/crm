@@ -95,19 +95,19 @@ export default function StudentList() {
         <div className="flex gap-2">
           <button
             onClick={() => setFilterStatus('active')}
-            className={`px-3 py-2 rounded ${filterStatus === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            className={`px-3 py-2 rounded ${filterStatus === 'active' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}
           >
             Активные
           </button>
           <button
             onClick={() => setFilterStatus('archived')}
-            className={`px-3 py-2 rounded ${filterStatus === 'archived' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            className={`px-3 py-2 rounded ${filterStatus === 'archived' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}
           >
             Архив
           </button>
           <button
             onClick={() => setFilterStatus('all')}
-            className={`px-3 py-2 rounded ${filterStatus === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            className={`px-3 py-2 rounded ${filterStatus === 'all' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}
           >
             Все
           </button>
@@ -129,7 +129,7 @@ export default function StudentList() {
           {students?.map((s: any) => (
             <tr key={s.id}>
               <td className="border p-2">
-                <Link href={`/admin/students/${s.id}`} className="text-blue-600 hover:underline">
+                <Link href={`/admin/students/${s.id}`} className="text-brand-600 hover:underline">
                   {s.full_name}
                 </Link>
               </td>
@@ -139,9 +139,9 @@ export default function StudentList() {
               <td className="border p-2">{s.customer_name}</td>
               <td className="border p-2 space-x-2">
                 {s.status === 'archived' ? (
-                  <button onClick={() => handleRestore(s.id)} className="text-green-600 hover:underline">Восстановить</button>
+                  <button onClick={() => handleRestore(s.id)} className="text-success hover:underline">Восстановить</button>
                 ) : (
-                  <button onClick={() => handleArchive(s.id)} className="text-red-600 hover:underline">В архив</button>
+                  <button onClick={() => handleArchive(s.id)} className="text-danger hover:underline">В архив</button>
                 )}
               </td>
             </tr>

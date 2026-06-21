@@ -31,7 +31,7 @@ export default function TeacherProfilePage() {
     loadTeacher()
   }
 
-  if (!teacher) return <div className="p-6">Загрузка...</div>
+  if (!teacher) return <div className="p-6">Р—Р°РіСЂСѓР·РєР°...</div>
 
   return (
     <div className="p-6">
@@ -39,21 +39,21 @@ export default function TeacherProfilePage() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-bold">
-              <button onClick={() => setShowEditForm(true)} className="text-left hover:text-blue-600">
+              <button onClick={() => setShowEditForm(true)} className="text-left hover:text-brand-600">
                 {teacher.full_name}
               </button>
             </h1>
             <p className="text-gray-600 mt-1">{teacher.email}</p>
             {teacher.phone && <p className="text-gray-600">{teacher.phone}</p>}
             <p className="text-sm mt-2">
-              Статус:{' '}
-              <span className={`font-semibold ${teacher.status === 'active' ? 'text-green-600' : 'text-gray-600'}`}>
-                {teacher.status === 'active' ? 'Активный' : 'Архивный'}
+              РЎС‚Р°С‚СѓСЃ:{' '}
+              <span className={`font-semibold ${teacher.status === 'active' ? 'text-success' : 'text-gray-600'}`}>
+                {teacher.status === 'active' ? 'РђРєС‚РёРІРЅС‹Р№' : 'РђСЂС…РёРІРЅС‹Р№'}
               </span>
             </p>
             {teacher.color && (
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-sm text-gray-600">Цвет:</span>
+                <span className="text-sm text-gray-600">Р¦РІРµС‚:</span>
                 <span className="h-4 w-8 rounded border" style={{ backgroundColor: teacher.color }} />
               </div>
             )}

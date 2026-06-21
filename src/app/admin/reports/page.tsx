@@ -241,7 +241,7 @@ export default function ReportsPage() {
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full border p-2 rounded" />
           </div>
         </div>
-        <button onClick={handleGenerate} disabled={loading} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+        <button onClick={handleGenerate} disabled={loading} className="bg-brand-600 text-white px-6 py-2 rounded hover:bg-brand-700 disabled:opacity-50">
           {loading ? 'Формирование...' : 'Сформировать отчёт'}
         </button>
       </div>
@@ -250,7 +250,7 @@ export default function ReportsPage() {
         <div className="bg-white p-6 rounded shadow">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Результаты ({results.length})</h2>
-            <button onClick={handleExportExcel} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+            <button onClick={handleExportExcel} className="bg-success text-white px-4 py-2 rounded hover:bg-success">
               Скачать Excel
             </button>
           </div>

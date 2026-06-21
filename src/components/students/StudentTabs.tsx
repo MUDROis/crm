@@ -23,7 +23,7 @@ export default function StudentTabs({ studentId }: { studentId: string }) {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded ${tab === t.key ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            className={`px-4 py-2 rounded ${tab === t.key ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}
           >
             {t.label}
           </button>

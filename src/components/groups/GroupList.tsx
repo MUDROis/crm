@@ -37,9 +37,9 @@ export default function GroupList({ onEdit }: { onEdit: (group: any) => void }) 
   return (
     <div>
       <div className="flex gap-2 mb-4">
-        <button onClick={() => setFilterStatus('active')} className={`px-3 py-2 rounded ${filterStatus === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Активные</button>
-        <button onClick={() => setFilterStatus('archived')} className={`px-3 py-2 rounded ${filterStatus === 'archived' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Архив</button>
-        <button onClick={() => setFilterStatus('all')} className={`px-3 py-2 rounded ${filterStatus === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Все</button>
+        <button onClick={() => setFilterStatus('active')} className={`px-3 py-2 rounded ${filterStatus === 'active' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>Активные</button>
+        <button onClick={() => setFilterStatus('archived')} className={`px-3 py-2 rounded ${filterStatus === 'archived' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>Архив</button>
+        <button onClick={() => setFilterStatus('all')} className={`px-3 py-2 rounded ${filterStatus === 'all' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>Все</button>
       </div>
 
       <table className="w-full border-collapse">
@@ -54,14 +54,14 @@ export default function GroupList({ onEdit }: { onEdit: (group: any) => void }) 
         <tbody>
           {groups?.map((g: any) => (
             <tr key={g.id}>
-              <td className="border p-2"><button onClick={() => router.push(`/admin/groups/${g.id}`)} className="text-blue-600 hover:underline text-left">{g.name}</button></td>
+              <td className="border p-2"><button onClick={() => router.push(`/admin/groups/${g.id}`)} className="text-brand-600 hover:underline text-left">{g.name}</button></td>
               <td className="border p-2">{g.subject}</td>
               <td className="border p-2">{g.teacher?.full_name || '-'}</td>
               <td className="border p-2 space-x-2">
                 {g.status === 'archived' ? (
-                  <button onClick={() => handleRestore(g.id)} className="text-green-600 hover:underline">Восстановить</button>
+                  <button onClick={() => handleRestore(g.id)} className="text-success hover:underline">Восстановить</button>
                 ) : (
-                  <button onClick={() => handleArchive(g.id)} className="text-red-600 hover:underline">В архив</button>
+                  <button onClick={() => handleArchive(g.id)} className="text-danger hover:underline">В архив</button>
                 )}
               </td>
             </tr>

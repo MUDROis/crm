@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import GlobalSearch from '@/components/GlobalSearch'
 import { createClient } from '@/utils/supabase/client'
 
 interface TeacherNavbarProps {
@@ -16,7 +17,7 @@ export default function TeacherNavbar({ pendingCount = 0 }: TeacherNavbarProps) 
     if (pendingCount === 0) {
       const supabase = createClient()
       
-      supabase.auth.getUser().then(({ data }) => {
+      supabase.auth.getUser().then(({ data }: { data: { user: { id: string } | null } }) => {
         if (data.user) {
           const userId = data.user.id
           supabase
@@ -24,7 +25,7 @@ export default function TeacherNavbar({ pendingCount = 0 }: TeacherNavbarProps) 
             .select('id', { count: 'exact', head: true })
             .eq('assigned_to', userId)
             .eq('completed', false)
-            .then(({ count }) => {
+            .then(({ count }: { count: number | null }) => {
               if (count !== null) setCount(count)
             })
         }
@@ -33,23 +34,24 @@ export default function TeacherNavbar({ pendingCount = 0 }: TeacherNavbarProps) 
   }, [pendingCount])
 
   return (
-    <nav className="bg-white shadow p-4 flex justify-between items-center">
-      <Link href="/teacher" className="text-xl font-bold text-gray-800 hover:text-blue-600">
+    <nav className="bg-white shadow p-4 flex justify-between items-center gap-4">
+      <Link href="/teacher" className="text-xl font-bold text-gray-800 hover:text-brand-600 shrink-0">
         ИНТЕРАКТИВНАЯ ШКОЛА МУДРО
       </Link>
-      <div className="flex items-center gap-6">
-        <Link href="/teacher/lessons" className="text-2xl text-gray-600 hover:text-blue-600 transition">
+      <GlobalSearch />
+      <div className="flex items-center gap-6 shrink-0">
+        <Link href="/teacher/lessons" className="text-2xl text-gray-600 hover:text-brand-600 transition">
           📅
         </Link>
-        <Link href="/teacher/tasks" className="relative text-2xl text-gray-600 hover:text-blue-600 transition">
+        <Link href="/teacher/tasks" className="relative text-2xl text-gray-600 hover:text-brand-600 transition">
           📋
           {count > 0 && (
-            <span className="absolute -top-2 -right-5 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+            <span className="absolute -top-2 -right-5 bg-danger text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
               {count}
             </span>
           )}
         </Link>
-        <Link href="/teacher/students" className="text-2xl text-gray-600 hover:text-blue-600 transition">
+        <Link href="/teacher/students" className="text-2xl text-gray-600 hover:text-brand-600 transition">
           👩‍🎓
         </Link>
       </div>

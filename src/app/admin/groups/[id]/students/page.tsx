@@ -27,15 +27,15 @@ export default function GroupStudentsPage() {
   }, [groupId])
 
   async function loadData() {
-    // Группа
+    // Р“СЂСѓРїРїР°
     const { data: grp } = await supabase.from('groups').select('*').eq('id', groupId).single()
     setGroup(grp)
 
-    // Все ученики
+    // Р’СЃРµ СѓС‡РµРЅРёРєРё
     const { data: all } = await supabase.from('students').select('id, full_name, subject').order('full_name')
     setAllStudents(all || [])
 
-    // Ученики в группе
+    // РЈС‡РµРЅРёРєРё РІ РіСЂСѓРїРїРµ
     const { data: inGroup } = await supabase
       .from('group_students')
       .select('student:students(id, full_name, subject)')
@@ -56,41 +56,41 @@ export default function GroupStudentsPage() {
     loadData()
   }
 
-  if (loading) return <p className="p-6">Загрузка...</p>
-  if (!group) return <p className="p-6">Группа не найдена</p>
+  if (loading) return <p className="p-6">Р—Р°РіСЂСѓР·РєР°...</p>
+  if (!group) return <p className="p-6">Р“СЂСѓРїРїР° РЅРµ РЅР°Р№РґРµРЅР°</p>
 
   const studentsNotInGroup = allStudents.filter((s) => !groupStudents.find((gs) => gs.id === s.id))
 
   return (
     <div className="p-6">
-      <button onClick={() => router.back()} className="text-blue-600 mb-4 inline-block">← Назад к группам</button>
-      <h1 className="text-2xl font-bold mb-4">Ученики группы «{group.name}»</h1>
+      <button onClick={() => router.back()} className="text-brand-600 mb-4 inline-block">в†ђ РќР°Р·Р°Рґ Рє РіСЂСѓРїРїР°Рј</button>
+      <h1 className="text-2xl font-bold mb-4">РЈС‡РµРЅРёРєРё РіСЂСѓРїРїС‹ В«{group.name}В»</h1>
       <div className="grid grid-cols-2 gap-8">
         <div>
-          <h2 className="text-lg font-semibold mb-2">В группе ({groupStudents.length})</h2>
+          <h2 className="text-lg font-semibold mb-2">Р’ РіСЂСѓРїРїРµ ({groupStudents.length})</h2>
           {groupStudents.length === 0 ? (
-            <p className="text-gray-500">Нет учеников</p>
+            <p className="text-gray-500">РќРµС‚ СѓС‡РµРЅРёРєРѕРІ</p>
           ) : (
             <ul className="space-y-2">
               {groupStudents.map((s) => (
                 <li key={s.id} className="flex justify-between items-center border p-2 rounded">
                   <span>{s.full_name} ({s.subject})</span>
-                  <button onClick={() => removeStudent(s.id)} className="text-red-600 text-sm hover:underline">Удалить</button>
+                  <button onClick={() => removeStudent(s.id)} className="text-danger text-sm hover:underline">РЈРґР°Р»РёС‚СЊ</button>
                 </li>
               ))}
             </ul>
           )}
         </div>
         <div>
-          <h2 className="text-lg font-semibold mb-2">Доступные ученики</h2>
+          <h2 className="text-lg font-semibold mb-2">Р”РѕСЃС‚СѓРїРЅС‹Рµ СѓС‡РµРЅРёРєРё</h2>
           {studentsNotInGroup.length === 0 ? (
-            <p className="text-gray-500">Все ученики уже в группе</p>
+            <p className="text-gray-500">Р’СЃРµ СѓС‡РµРЅРёРєРё СѓР¶Рµ РІ РіСЂСѓРїРїРµ</p>
           ) : (
             <ul className="space-y-2">
               {studentsNotInGroup.map((s) => (
                 <li key={s.id} className="flex justify-between items-center border p-2 rounded">
                   <span>{s.full_name} ({s.subject})</span>
-                  <button onClick={() => addStudent(s.id)} className="text-green-600 text-sm hover:underline">Добавить</button>
+                  <button onClick={() => addStudent(s.id)} className="text-success text-sm hover:underline">Р”РѕР±Р°РІРёС‚СЊ</button>
                 </li>
               ))}
             </ul>

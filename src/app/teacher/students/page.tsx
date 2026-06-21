@@ -49,7 +49,7 @@ export default function TeacherStudentsPage() {
             {students.map((s) => (
               <tr key={s.id}>
                 <td className="border p-2">
-                  <Link href={`/teacher/students/${s.id}`} className="text-blue-600 hover:underline">
+                  <Link href={`/teacher/students/${s.id}`} className="text-brand-600 hover:underline">
                     {s.full_name}
                   </Link>
                 </td>

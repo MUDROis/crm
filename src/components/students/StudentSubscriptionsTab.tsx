@@ -65,7 +65,7 @@ export default function StudentSubscriptionsTab({ studentId }: { studentId: stri
     <div>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">Абонементы</h3>
-        <button onClick={handleAdd} className="bg-green-600 text-white px-3 py-1 rounded">+ Добавить</button>
+        <button onClick={handleAdd} className="bg-success text-white px-3 py-1 rounded">+ Добавить</button>
       </div>
       {subscriptions?.length === 0 ? (
         <p>Нет абонементов</p>
@@ -86,8 +86,8 @@ export default function StudentSubscriptionsTab({ studentId }: { studentId: stri
                 <td className="border p-2">{sub.remaining_lessons}</td>
                 <td className="border p-2">{sub.valid_until || '—'}</td>
                 <td className="border p-2 space-x-2">
-                  <button onClick={() => handleEdit(sub)} className="text-blue-600 hover:underline">Ред.</button>
-                  <button onClick={() => handleDelete(sub.id)} className="text-red-600 hover:underline">Удал.</button>
+                  <button onClick={() => handleEdit(sub)} className="text-brand-600 hover:underline">Ред.</button>
+                  <button onClick={() => handleDelete(sub.id)} className="text-danger hover:underline">Удал.</button>
                 </td>
               </tr>
             ))}
@@ -114,7 +114,7 @@ export default function StudentSubscriptionsTab({ studentId }: { studentId: stri
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button type="button" onClick={handleClose} className="px-4 py-2 border rounded">Отмена</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Сохранить</button>
+                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded">Сохранить</button>
               </div>
             </form>
           </div>

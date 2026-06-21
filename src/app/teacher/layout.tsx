@@ -1,5 +1,6 @@
 import AuthGuard from '@/components/AuthGuard'
 import TeacherNavbar from '@/components/TeacherNavbar'
+import Breadcrumbs from '@/components/Breadcrumbs'
 import { createClient } from '@/utils/supabase/server'
 
 export default async function TeacherLayout({ children }: { children: React.ReactNode }) {
@@ -19,6 +20,7 @@ export default async function TeacherLayout({ children }: { children: React.Reac
   return (
     <AuthGuard requiredRole="teacher">
       <TeacherNavbar pendingCount={pendingCount} />
+      <Breadcrumbs />
       <div>{children}</div>
     </AuthGuard>
   )

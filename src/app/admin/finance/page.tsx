@@ -24,7 +24,7 @@ export default function FinancePage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 rounded ${activeTab === tab.key ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+            className={`px-4 py-2 rounded ${activeTab === tab.key ? 'bg-brand-600 text-white' : 'bg-gray-200 text-gray-700'}`}
           >
             {tab.label}
           </button>

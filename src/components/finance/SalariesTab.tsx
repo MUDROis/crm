@@ -76,7 +76,7 @@ export default function SalariesTab() {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Зарплаты</h2>
-        <button onClick={handleAdd} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">+ Добавить</button>
+        <button onClick={handleAdd} className="bg-success text-white px-4 py-2 rounded hover:bg-success">+ Добавить</button>
       </div>
       <table className="w-full border-collapse">
         <thead>
@@ -96,9 +96,9 @@ export default function SalariesTab() {
               <td className="border p-2">{s.period_start} – {s.period_end}</td>
               <td className="border p-2">{s.paid ? 'Выплачено' : 'Не выплачено'}</td>
               <td className="border p-2 space-x-2">
-                <button onClick={() => handleEdit(s)} className="text-blue-600 hover:underline">Ред.</button>
-                <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:underline">Удал.</button>
-                <button onClick={() => togglePaid(s.id, s.paid)} className="text-green-600 hover:underline">
+                <button onClick={() => handleEdit(s)} className="text-brand-600 hover:underline">Ред.</button>
+                <button onClick={() => handleDelete(s.id)} className="text-danger hover:underline">Удал.</button>
+                <button onClick={() => togglePaid(s.id, s.paid)} className="text-success hover:underline">
                   {s.paid ? 'Отменить' : 'Выплатить'}
                 </button>
               </td>
@@ -132,7 +132,7 @@ export default function SalariesTab() {
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded">Отмена</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Сохранить</button>
+                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded">Сохранить</button>
               </div>
             </form>
           </div>

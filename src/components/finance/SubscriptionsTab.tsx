@@ -78,13 +78,13 @@ export default function SubscriptionsTab() {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Абонементы</h2>
-        <button onClick={handleAdd} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">+ Добавить</button>
+        <button onClick={handleAdd} className="bg-success text-white px-4 py-2 rounded hover:bg-success">+ Добавить</button>
       </div>
 
       <div className="flex gap-2 mb-4">
-        <button onClick={() => setFilterStatus('active')} className={`px-3 py-2 rounded ${filterStatus === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Активные</button>
-        <button onClick={() => setFilterStatus('archived')} className={`px-3 py-2 rounded ${filterStatus === 'archived' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Архив</button>
-        <button onClick={() => setFilterStatus('all')} className={`px-3 py-2 rounded ${filterStatus === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Все</button>
+        <button onClick={() => setFilterStatus('active')} className={`px-3 py-2 rounded ${filterStatus === 'active' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>Активные</button>
+        <button onClick={() => setFilterStatus('archived')} className={`px-3 py-2 rounded ${filterStatus === 'archived' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>Архив</button>
+        <button onClick={() => setFilterStatus('all')} className={`px-3 py-2 rounded ${filterStatus === 'all' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}>Все</button>
       </div>
 
       <table className="w-full border-collapse">
@@ -105,13 +105,13 @@ export default function SubscriptionsTab() {
               <td className="border p-2">{s.remaining_lessons}</td>
               <td className="border p-2">{s.valid_until || '—'}</td>
               <td className="border p-2 space-x-2">
-                <button onClick={() => handleEdit(s)} className="text-blue-600 hover:underline">Ред.</button>
+                <button onClick={() => handleEdit(s)} className="text-brand-600 hover:underline">Ред.</button>
                 {s.status === 'archived' ? (
-                  <button onClick={() => handleRestore(s.id)} className="text-green-600 hover:underline">Восстановить</button>
+                  <button onClick={() => handleRestore(s.id)} className="text-success hover:underline">Восстановить</button>
                 ) : (
-                  <button onClick={() => handleArchive(s.id)} className="text-red-600 hover:underline">В архив</button>
+                  <button onClick={() => handleArchive(s.id)} className="text-danger hover:underline">В архив</button>
                 )}
-                <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:underline">Удалить</button>
+                <button onClick={() => handleDelete(s.id)} className="text-danger hover:underline">Удалить</button>
               </td>
             </tr>
           ))}
@@ -144,7 +144,7 @@ export default function SubscriptionsTab() {
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded">Отмена</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Сохранить</button>
+                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded">Сохранить</button>
               </div>
             </form>
           </div>

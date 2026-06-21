@@ -122,7 +122,7 @@ export default function StudentInfoModal({ studentId, onClose }: { studentId: st
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white p-6 rounded-lg">
           <div className="flex items-center gap-3">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-600"></div>
             <span>Загрузка...</span>
           </div>
         </div>
@@ -135,9 +135,9 @@ export default function StudentInfoModal({ studentId, onClose }: { studentId: st
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white p-6 rounded-lg max-w-md">
-          <h3 className="text-lg font-bold mb-2 text-red-600">Ошибка</h3>
+          <h3 className="text-lg font-bold mb-2 text-danger">Ошибка</h3>
           <p className="mb-4">{error}</p>
-          <button onClick={onClose} className="px-4 py-2 bg-blue-600 text-white rounded">
+          <button onClick={onClose} className="px-4 py-2 bg-brand-600 text-white rounded">
             Закрыть
           </button>
         </div>
@@ -170,13 +170,13 @@ export default function StudentInfoModal({ studentId, onClose }: { studentId: st
         <div className="flex gap-4 mb-6">
           <button
             onClick={() => setTab('subscriptions')}
-            className={`px-4 py-2 rounded ${tab === 'subscriptions' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            className={`px-4 py-2 rounded ${tab === 'subscriptions' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}
           >
             Абонементы
           </button>
           <button
             onClick={() => setTab('schedule')}
-            className={`px-4 py-2 rounded ${tab === 'schedule' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            className={`px-4 py-2 rounded ${tab === 'schedule' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}
           >
             Расписание
           </button>

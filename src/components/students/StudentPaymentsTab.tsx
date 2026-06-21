@@ -77,7 +77,7 @@ export default function StudentPaymentsTab({ studentId }: { studentId: string })
     <div>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">Платежи</h3>
-        <button onClick={handleAdd} className="bg-green-600 text-white px-3 py-1 rounded">+ Добавить</button>
+        <button onClick={handleAdd} className="bg-success text-white px-3 py-1 rounded">+ Добавить</button>
       </div>
       {payments?.length === 0 ? (
         <p>Нет платежей</p>
@@ -95,12 +95,12 @@ export default function StudentPaymentsTab({ studentId }: { studentId: string })
           <tbody>
             {payments?.map((p: any) => (
               <tr key={p.id}>
-                <td className="border p-2 cursor-pointer hover:text-blue-600" onClick={() => handleEdit(p)}>{p.payment_date}</td>
+                <td className="border p-2 cursor-pointer hover:text-brand-600" onClick={() => handleEdit(p)}>{p.payment_date}</td>
                 <td className="border p-2">{p.amount}</td>
                 <td className="border p-2">{p.type === 'single' ? 'Разовый' : 'Абонемент'}</td>
                 <td className="border p-2">{p.description}</td>
                 <td className="border p-2 space-x-2">
-                  <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:underline" title="Удалить">
+                  <button onClick={() => handleDelete(p.id)} className="text-danger hover:underline" title="Удалить">
                     🗑️
                   </button>
                 </td>
@@ -136,12 +136,12 @@ export default function StudentPaymentsTab({ studentId }: { studentId: string })
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 {editingPayment && (
-                  <button type="button" onClick={() => { if (confirm('Удалить платёж?')) { handleDelete(editingPayment.id); handleClose(); } }} className="px-4 py-2 text-red-600 hover:bg-red-50 rounded">
+                  <button type="button" onClick={() => { if (confirm('Удалить платёж?')) { handleDelete(editingPayment.id); handleClose(); } }} className="px-4 py-2 text-danger hover:bg-red-50 rounded">
                     🗑️ Удалить
                   </button>
                 )}
                 <button type="button" onClick={handleClose} className="px-4 py-2 border rounded">Отмена</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Сохранить</button>
+                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded">Сохранить</button>
               </div>
             </form>
           </div>

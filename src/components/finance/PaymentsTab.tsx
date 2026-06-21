@@ -90,7 +90,7 @@ export default function PaymentsTab() {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Платежи</h2>
-        <button onClick={handleAdd} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">+ Добавить</button>
+        <button onClick={handleAdd} className="bg-success text-white px-4 py-2 rounded hover:bg-success">+ Добавить</button>
       </div>
       <table className="w-full border-collapse">
         <thead>
@@ -112,8 +112,8 @@ export default function PaymentsTab() {
               <td className="border p-2">{p.type === 'single' ? 'Разовый' : 'Абонемент'}</td>
               <td className="border p-2">{p.description}</td>
               <td className="border p-2 space-x-2">
-                <button onClick={() => handleEdit(p)} className="text-blue-600 hover:underline">Ред.</button>
-                <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:underline">Удал.</button>
+                <button onClick={() => handleEdit(p)} className="text-brand-600 hover:underline">Ред.</button>
+                <button onClick={() => handleDelete(p.id)} className="text-danger hover:underline">Удал.</button>
               </td>
             </tr>
           ))}
@@ -163,7 +163,7 @@ export default function PaymentsTab() {
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded">Отмена</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Сохранить</button>
+                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded">Сохранить</button>
               </div>
             </form>
           </div>

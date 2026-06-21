@@ -208,7 +208,7 @@ export default function StudentForm({
                 type="button"
                 onClick={handleDelete}
                 disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 text-red-600 border border-red-600 rounded hover:bg-red-50 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-danger border border-danger rounded hover:bg-red-50 disabled:opacity-50"
                 title="Удалить ученика"
               >
                 <svg
@@ -231,7 +231,7 @@ export default function StudentForm({
             )}
             <div className="flex space-x-3">
               <button type="button" onClick={onClose} className="px-4 py-2 border rounded">Отмена</button>
-              <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">
+              <button type="submit" disabled={loading} className="px-4 py-2 bg-brand-600 text-white rounded disabled:opacity-50">
                 {loading ? 'Сохранение...' : 'Сохранить'}
               </button>
             </div>

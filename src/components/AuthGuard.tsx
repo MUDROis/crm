@@ -58,7 +58,7 @@ export default function AuthGuard({
     // Теперь этот спиннер будет видно очень редко (только если метаданных нет)
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
         <span className="ml-3">Проверка доступа...</span>
       </div>
     )

@@ -41,7 +41,7 @@ export default function StudentScheduleTab({ studentId }: { studentId: string })
   return (
     <div>
       <button onClick={() => { setSelectedDate(new Date().toISOString().split('T')[0]); setShowNewForm(true) }}
-        className="mb-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        className="mb-4 bg-success text-white px-4 py-2 rounded hover:bg-success">
         + Новый урок
       </button>
       <LessonCalendar
