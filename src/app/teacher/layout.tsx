@@ -2,6 +2,8 @@ import AuthGuard from '@/components/AuthGuard'
 import TeacherNavbar from '@/components/TeacherNavbar'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import { createClient } from '@/utils/supabase/server'
+import { NotificationProvider } from '@/contexts/NotificationContext'
+import NotificationToast from '@/components/NotificationToast'
 
 export default async function TeacherLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -19,9 +21,12 @@ export default async function TeacherLayout({ children }: { children: React.Reac
 
   return (
     <AuthGuard requiredRole="teacher">
-      <TeacherNavbar pendingCount={pendingCount} />
-      <Breadcrumbs />
-      <div>{children}</div>
+      <NotificationProvider>
+        <TeacherNavbar pendingCount={pendingCount} />
+        <Breadcrumbs />
+        <div>{children}</div>
+        <NotificationToast />
+      </NotificationProvider>
     </AuthGuard>
   )
 }

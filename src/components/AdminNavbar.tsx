@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import GlobalSearch from '@/components/GlobalSearch'
+import NotificationBell from '@/components/NotificationBell'
 
 export default function AdminNavbar() {
   return (
@@ -11,6 +12,7 @@ export default function AdminNavbar() {
       </Link>
       <GlobalSearch />
       <div className="flex items-center gap-6 shrink-0">
+        <NotificationBell />
         <Link href="/admin/lessons" className="text-2xl text-gray-600 hover:text-brand-600 transition">
           📅
         </Link>

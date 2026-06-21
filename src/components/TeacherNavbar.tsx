@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import GlobalSearch from '@/components/GlobalSearch'
+import NotificationBell from '@/components/NotificationBell'
 import { createClient } from '@/utils/supabase/client'
 
 interface TeacherNavbarProps {
@@ -40,6 +41,7 @@ export default function TeacherNavbar({ pendingCount = 0 }: TeacherNavbarProps) 
       </Link>
       <GlobalSearch />
       <div className="flex items-center gap-6 shrink-0">
+        <NotificationBell />
         <Link href="/teacher/lessons" className="text-2xl text-gray-600 hover:text-brand-600 transition">
           📅
         </Link>
