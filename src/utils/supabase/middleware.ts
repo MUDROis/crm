@@ -24,17 +24,17 @@ export async function updateSession(request: NextRequest) {
   )
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
 
   const url = request.nextUrl.clone()
 
-  if (!user && !url.pathname.startsWith('/login')) {
+  if (!session && !url.pathname.startsWith('/login')) {
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (user && url.pathname === '/login') {
+  if (session && url.pathname === '/login') {
     url.pathname = '/admin'
     return NextResponse.redirect(url)
   }

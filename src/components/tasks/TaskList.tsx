@@ -23,7 +23,7 @@ export default function TaskList({
     } else {
       setUserId('admin') // фиктивный ключ
     }
-  }, [role, supabase])
+    }, [role])
 
   const queryKey = role === 'admin' ? 'tasks-admin' : `tasks-${userId}`
 

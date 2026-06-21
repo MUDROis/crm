@@ -59,7 +59,7 @@ export default function StudentForm({
       if (data) setTeachers(data)
     }
     loadTeachers()
-  }, [supabase])
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target

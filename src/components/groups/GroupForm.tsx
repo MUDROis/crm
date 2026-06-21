@@ -54,6 +54,7 @@ export default function GroupForm({
   useEffect(() => {
     loadTeachers()
     if (form.id) loadGroupStudents()
+    else loadAllStudents()
   }, [])
 
   useEffect(() => {
@@ -85,10 +86,6 @@ export default function GroupForm({
   async function loadAllStudents() {
     const { data } = await supabase.from('students').select('id, full_name, subject').order('full_name')
     setAllStudents(data || [])
-  }
-
-  if (!form.id) {
-    if (allStudents.length === 0) loadAllStudents()
   }
 
   const filteredStudents = allStudents.filter(

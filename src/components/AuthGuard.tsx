@@ -25,7 +25,6 @@ export default function AuthGuard({
           return
         }
 
-        // 1. Пробуем получить роль из метаданных (мгновенно!)
         const roleFromToken = session.user?.app_metadata?.role as string | undefined
         if (roleFromToken === requiredRole) {
           setAllowed(true)
@@ -33,7 +32,6 @@ export default function AuthGuard({
           return
         }
 
-        // 2. Если роли нет в метаданных (старый пользователь), загружаем из profiles
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -43,7 +41,6 @@ export default function AuthGuard({
         if (profile?.role === requiredRole) {
           setAllowed(true)
         } else {
-          // Неправильная роль – перенаправляем в нужный раздел
           router.replace(profile?.role === 'admin' ? '/admin' : '/teacher')
         }
       } catch (err) {
@@ -55,7 +52,7 @@ export default function AuthGuard({
     }
 
     check()
-  }, [supabase, router, requiredRole])
+  }, [router, requiredRole])
 
   if (checking) {
     // Теперь этот спиннер будет видно очень редко (только если метаданных нет)
