@@ -66,11 +66,11 @@ export default function GroupProfilePage() {
       <div className="bg-white rounded shadow p-6 mb-6">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-2xl font-bold">
+            <div className="text-2xl font-bold">
               <button onClick={() => setShowEditForm(true)} className="text-left hover:text-brand-600">
                 {group.name}
               </button>
-            </h1>
+            </div>
             <p className="text-gray-600 mt-1">{group.subject || 'Р‘РµР· РїСЂРµРґРјРµС‚Р°'}</p>
             {group.teacher && (
               <p className="text-gray-600">РџСЂРµРїРѕРґР°РІР°С‚РµР»СЊ: {group.teacher.full_name}</p>

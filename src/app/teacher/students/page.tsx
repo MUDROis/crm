@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import { useSort } from '@/hooks/useSort'
 import Link from 'next/link'
 
 export default function TeacherStudentsPage() {
@@ -27,27 +28,35 @@ export default function TeacherStudentsPage() {
     if (!error && data) setStudents(data)
     setLoading(false)
   }
+  const { sorted: sortedStudents, sortKey, sortAsc, toggleSort } = useSort(students, 'full_name')
 
   if (loading) return <div className="p-6">Загрузка...</div>
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Мои ученики</h1>
       {students.length === 0 ? (
         <p>У вас пока нет учеников</p>
       ) : (
         <table className="w-full border-collapse bg-white rounded shadow">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border p-2 text-left">ФИО</th>
-              <th className="border p-2 text-left">Предмет</th>
-              <th className="border p-2 text-left">Тип</th>
-              <th className="border p-2 text-left">Статус</th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('full_name')}>
+                ФИО {sortKey === 'full_name' && (sortAsc ? '↑' : '↓')}
+              </th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('subject')}>
+                Предмет {sortKey === 'subject' && (sortAsc ? '↑' : '↓')}
+              </th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('type')}>
+                Тип {sortKey === 'type' && (sortAsc ? '↑' : '↓')}
+              </th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('status')}>
+                Статус {sortKey === 'status' && (sortAsc ? '↑' : '↓')}
+              </th>
             </tr>
           </thead>
           <tbody>
-            {students.map((s) => (
-              <tr key={s.id}>
+            {sortedStudents.map((s) => (
+              <tr key={s.id} className="hover:bg-gray-50">
                 <td className="border p-2">
                   <Link href={`/teacher/students/${s.id}`} className="text-brand-600 hover:underline">
                     {s.full_name}

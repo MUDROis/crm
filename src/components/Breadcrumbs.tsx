@@ -9,7 +9,7 @@ const segmentLabels: Record<string, string> = {
   students: 'Ученики',
   groups: 'Группы',
   lessons: 'Уроки',
-  tasks: 'Задания',
+  tasks: 'Задачи',
   finance: 'Финансы',
   reports: 'Отчёты',
   teachers: 'Преподаватели',

@@ -3,7 +3,6 @@ import Link from 'next/link'
 export default function AdminDashboard() {
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Панель администратора</h1>
       <div className="grid grid-cols-2 gap-4">
         <Link href="/admin/lessons" className="p-6 bg-white rounded shadow hover:shadow-md transition">
           <h2 className="text-xl font-semibold">📅 Расписание</h2>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useSort } from '@/hooks/useSort'
 import { createClient } from '@/utils/supabase/client'
 
 export default function TaskList({
@@ -40,6 +41,7 @@ export default function TaskList({
     if (error) throw error
     return data || []
   })
+  const { sorted: sortedTasks, sortKey, sortAsc, toggleSort } = useSort(tasks ?? [], 'title')
 
   const toggleComplete = async (taskId: string, current: boolean) => {
     const supabase = createClient()
@@ -60,16 +62,22 @@ export default function TaskList({
     <table className="w-full border-collapse">
       <thead>
         <tr className="bg-gray-100">
-          <th className="border p-2 text-left">Статус</th>
-          <th className="border p-2 text-left">Заголовок</th>
+          <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('completed')}>
+            Статус {sortKey === 'completed' && (sortAsc ? '↑' : '↓')}
+          </th>
+          <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('title')}>
+            Заголовок {sortKey === 'title' && (sortAsc ? '↑' : '↓')}
+          </th>
           {role === 'admin' && <th className="border p-2 text-left">Кому</th>}
-          <th className="border p-2 text-left">Срок</th>
+          <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('due_date')}>
+            Срок {sortKey === 'due_date' && (sortAsc ? '↑' : '↓')}
+          </th>
           <th className="border p-2 text-left">Действия</th>
         </tr>
       </thead>
       <tbody>
-        {tasks?.map((task: any) => (
-          <tr key={task.id} className={task.completed ? 'bg-green-50' : ''}>
+        {sortedTasks?.map((task: any) => (
+          <tr key={task.id} className={`hover:bg-gray-50 ${task.completed ? 'bg-green-50' : ''}`}>
             <td className="border p-2">{task.completed ? '✅ Выполнено' : '⏳ Ожидает'}</td>
             <td className="border p-2">
               <div className="font-medium">{task.title}</div>

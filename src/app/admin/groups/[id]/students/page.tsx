@@ -64,7 +64,6 @@ export default function GroupStudentsPage() {
   return (
     <div className="p-6">
       <button onClick={() => router.back()} className="text-brand-600 mb-4 inline-block">в†ђ РќР°Р·Р°Рґ Рє РіСЂСѓРїРїР°Рј</button>
-      <h1 className="text-2xl font-bold mb-4">РЈС‡РµРЅРёРєРё РіСЂСѓРїРїС‹ В«{group.name}В»</h1>
       <div className="grid grid-cols-2 gap-8">
         <div>
           <h2 className="text-lg font-semibold mb-2">Р’ РіСЂСѓРїРїРµ ({groupStudents.length})</h2>

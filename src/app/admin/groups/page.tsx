@@ -26,8 +26,7 @@ export default function AdminGroupsPage() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Группы</h1>
+      <div className="flex justify-end items-center mb-6">
         <button onClick={handleAdd} className="bg-success text-white px-4 py-2 rounded hover:bg-success">
           + Добавить группу
         </button>

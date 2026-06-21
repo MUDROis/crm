@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useSort } from '@/hooks/useSort'
 import { createClient } from '@/utils/supabase/client'
 
 export default function StudentSubscriptionsTab({ studentId }: { studentId: string }) {
@@ -19,6 +20,7 @@ export default function StudentSubscriptionsTab({ studentId }: { studentId: stri
     if (error) throw error
     return data || []
   })
+  const { sorted: sortedSubs, sortKey, sortAsc, toggleSort } = useSort(subscriptions ?? [], 'total_lessons')
 
   const handleAdd = () => {
     setEditingSub(null)
@@ -73,15 +75,21 @@ export default function StudentSubscriptionsTab({ studentId }: { studentId: stri
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border p-2 text-left">Всего занятий</th>
-              <th className="border p-2 text-left">Осталось</th>
-              <th className="border p-2 text-left">Действует до</th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('total_lessons')}>
+                Всего занятий {sortKey === 'total_lessons' && (sortAsc ? '↑' : '↓')}
+              </th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('remaining_lessons')}>
+                Осталось {sortKey === 'remaining_lessons' && (sortAsc ? '↑' : '↓')}
+              </th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('valid_until')}>
+                Действует до {sortKey === 'valid_until' && (sortAsc ? '↑' : '↓')}
+              </th>
               <th className="border p-2 text-left">Действия</th>
             </tr>
           </thead>
           <tbody>
-            {subscriptions?.map((sub: any) => (
-              <tr key={sub.id}>
+            {sortedSubs?.map((sub: any) => (
+              <tr key={sub.id} className="hover:bg-gray-50">
                 <td className="border p-2">{sub.total_lessons}</td>
                 <td className="border p-2">{sub.remaining_lessons}</td>
                 <td className="border p-2">{sub.valid_until || '—'}</td>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
+import { useSort } from '@/hooks/useSort'
 import TeacherForm from '@/components/teachers/TeacherForm'
 
 interface Teacher {
@@ -34,6 +35,7 @@ export default function TeachersPage() {
     if (!error && data) setTeachers(data)
     setLoading(false)
   }
+  const { sorted: sortedTeachers, sortKey, sortAsc, toggleSort } = useSort(teachers, 'full_name')
 
   const handleAdd = () => {
     setEditingTeacher(null)
@@ -77,8 +79,7 @@ export default function TeachersPage() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Преподаватели</h1>
+      <div className="flex justify-end items-center mb-6">
         <button onClick={handleAdd} className="bg-success text-white px-4 py-2 rounded hover:bg-success">
           + Добавить преподавателя
         </button>
@@ -93,14 +94,18 @@ export default function TeachersPage() {
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-gray-100">
-            <th className="border p-2 text-left">Имя</th>
-            <th className="border p-2 text-left">Email</th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('full_name')}>
+              Имя {sortKey === 'full_name' && (sortAsc ? '↑' : '↓')}
+            </th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('email')}>
+              Email {sortKey === 'email' && (sortAsc ? '↑' : '↓')}
+            </th>
             <th className="border p-2 text-left">Действия</th>
           </tr>
         </thead>
         <tbody>
-          {teachers.map((t) => (
-            <tr key={t.id}>
+          {sortedTeachers.map((t) => (
+            <tr key={t.id} className="hover:bg-gray-50">
               <td className="border p-2"><button onClick={() => router.push(`/admin/teachers/${t.id}`)} className="text-brand-600 hover:underline text-left">{t.full_name || '—'}</button></td>
               <td className="border p-2">{t.email}</td>
               <td className="border p-2 space-x-2">

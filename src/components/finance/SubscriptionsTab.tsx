@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useSort } from '@/hooks/useSort'
 import { createClient } from '@/utils/supabase/client'
 
 export default function SubscriptionsTab() {
@@ -20,6 +21,7 @@ export default function SubscriptionsTab() {
     if (error) throw error
     return data || []
   })
+  const { sorted: sortedSubs, sortKey, sortAsc, toggleSort } = useSort(subscriptions ?? [], 'total_lessons')
 
   const { data: students } = useSupabaseQuery('students-for-subscriptions', async (supabase) => {
     const { data } = await supabase.from('students').select('id, full_name').order('full_name')
@@ -91,15 +93,21 @@ export default function SubscriptionsTab() {
         <thead>
           <tr className="bg-gray-100">
             <th className="border p-2 text-left">Ученик</th>
-            <th className="border p-2 text-left">Всего занятий</th>
-            <th className="border p-2 text-left">Осталось</th>
-            <th className="border p-2 text-left">Действует до</th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('total_lessons')}>
+              Всего занятий {sortKey === 'total_lessons' && (sortAsc ? '↑' : '↓')}
+            </th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('remaining_lessons')}>
+              Осталось {sortKey === 'remaining_lessons' && (sortAsc ? '↑' : '↓')}
+            </th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('valid_until')}>
+              Действует до {sortKey === 'valid_until' && (sortAsc ? '↑' : '↓')}
+            </th>
             <th className="border p-2 text-left">Действия</th>
           </tr>
         </thead>
         <tbody>
-          {subscriptions?.map((s: any) => (
-            <tr key={s.id}>
+          {sortedSubs?.map((s: any) => (
+            <tr key={s.id} className="hover:bg-gray-50">
               <td className="border p-2">{s.students?.full_name || '-'}</td>
               <td className="border p-2">{s.total_lessons}</td>
               <td className="border p-2">{s.remaining_lessons}</td>

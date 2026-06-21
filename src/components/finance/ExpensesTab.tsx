@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useSort } from '@/hooks/useSort'
 import { createClient } from '@/utils/supabase/client'
 
 export default function ExpensesTab() {
@@ -15,6 +16,7 @@ export default function ExpensesTab() {
     if (error) throw error
     return data || []
   })
+  const { sorted: sortedExpenses, sortKey, sortAsc, toggleSort } = useSort(expenses ?? [], 'expense_date')
 
   const { data: categories } = useSupabaseQuery<string[]>('expense-categories', async (supabase) => {
     const { data } = await supabase.from('expenses').select('category')
@@ -74,16 +76,24 @@ export default function ExpensesTab() {
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-gray-100">
-            <th className="border p-2 text-left">Дата</th>
-            <th className="border p-2 text-left">Категория</th>
-            <th className="border p-2 text-left">Сумма</th>
-            <th className="border p-2 text-left">Описание</th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('expense_date')}>
+              Дата {sortKey === 'expense_date' && (sortAsc ? '↑' : '↓')}
+            </th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('category')}>
+              Категория {sortKey === 'category' && (sortAsc ? '↑' : '↓')}
+            </th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('amount')}>
+              Сумма {sortKey === 'amount' && (sortAsc ? '↑' : '↓')}
+            </th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('description')}>
+              Описание {sortKey === 'description' && (sortAsc ? '↑' : '↓')}
+            </th>
             <th className="border p-2 text-left">Действия</th>
           </tr>
         </thead>
         <tbody>
-          {expenses?.map((e: any) => (
-            <tr key={e.id}>
+          {sortedExpenses?.map((e: any) => (
+            <tr key={e.id} className="hover:bg-gray-50">
               <td className="border p-2">{e.expense_date}</td>
               <td className="border p-2">{e.category}</td>
               <td className="border p-2">{e.amount}</td>

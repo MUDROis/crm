@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import { useSort } from '@/hooks/useSort'
 import * as XLSX from 'xlsx'
 
 interface Student {
@@ -196,6 +197,7 @@ export default function ReportsPage() {
     setGenerated(true)
     setLoading(false)
   }
+  const { sorted: sortedResults, sortKey, sortAsc, toggleSort } = useSort(results, 'date')
 
   const handleExportExcel = () => {
     if (results.length === 0) return
@@ -207,8 +209,6 @@ export default function ReportsPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Отчёты по комментариям</h1>
-
       <div className="bg-white p-6 rounded shadow mb-6">
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
@@ -261,18 +261,32 @@ export default function ReportsPage() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="bg-gray-100">
-                    <th className="border p-2 text-left">Дата</th>
-                    <th className="border p-2 text-left">Время</th>
-                    <th className="border p-2 text-left">Ученик</th>
-                    <th className="border p-2 text-left">Группа</th>
-                    <th className="border p-2 text-left">Преподаватель</th>
-                    <th className="border p-2 text-left">Статус</th>
-                    <th className="border p-2 text-left">Комментарий</th>
+                    <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('date')}>
+                      Дата {sortKey === 'date' && (sortAsc ? '↑' : '↓')}
+                    </th>
+                    <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('time')}>
+                      Время {sortKey === 'time' && (sortAsc ? '↑' : '↓')}
+                    </th>
+                    <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('studentName')}>
+                      Ученик {sortKey === 'studentName' && (sortAsc ? '↑' : '↓')}
+                    </th>
+                    <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('groupName')}>
+                      Группа {sortKey === 'groupName' && (sortAsc ? '↑' : '↓')}
+                    </th>
+                    <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('teacherName')}>
+                      Преподаватель {sortKey === 'teacherName' && (sortAsc ? '↑' : '↓')}
+                    </th>
+                    <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('status')}>
+                      Статус {sortKey === 'status' && (sortAsc ? '↑' : '↓')}
+                    </th>
+                    <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('comment')}>
+                      Комментарий {sortKey === 'comment' && (sortAsc ? '↑' : '↓')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {results.map((row, idx) => (
-                    <tr key={idx}>
+                  {sortedResults.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50">
                       <td className="border p-2">{row.date}</td>
                       <td className="border p-2">{row.time}</td>
                       <td className="border p-2">{row.studentName}</td>

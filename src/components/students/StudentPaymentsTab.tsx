@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useSort } from '@/hooks/useSort'
 import { createClient } from '@/utils/supabase/client'
 
 export default function StudentPaymentsTab({ studentId }: { studentId: string }) {
@@ -19,6 +20,7 @@ export default function StudentPaymentsTab({ studentId }: { studentId: string })
     if (error) throw error
     return data || []
   })
+  const { sorted: sortedPayments, sortKey, sortAsc, toggleSort } = useSort(payments ?? [], 'payment_date')
 
   const handleAdd = () => {
     setEditingPayment(null)
@@ -85,16 +87,24 @@ export default function StudentPaymentsTab({ studentId }: { studentId: string })
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border p-2 text-left">Дата</th>
-              <th className="border p-2 text-left">Сумма</th>
-              <th className="border p-2 text-left">Тип</th>
-              <th className="border p-2 text-left">Описание</th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('payment_date')}>
+                Дата {sortKey === 'payment_date' && (sortAsc ? '↑' : '↓')}
+              </th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('amount')}>
+                Сумма {sortKey === 'amount' && (sortAsc ? '↑' : '↓')}
+              </th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('type')}>
+                Тип {sortKey === 'type' && (sortAsc ? '↑' : '↓')}
+              </th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('description')}>
+                Описание {sortKey === 'description' && (sortAsc ? '↑' : '↓')}
+              </th>
               <th className="border p-2 text-left">Действия</th>
             </tr>
           </thead>
           <tbody>
-            {payments?.map((p: any) => (
-              <tr key={p.id}>
+            {sortedPayments?.map((p: any) => (
+              <tr key={p.id} className="hover:bg-gray-50">
                 <td className="border p-2 cursor-pointer hover:text-brand-600" onClick={() => handleEdit(p)}>{p.payment_date}</td>
                 <td className="border p-2">{p.amount}</td>
                 <td className="border p-2">{p.type === 'single' ? 'Разовый' : 'Абонемент'}</td>

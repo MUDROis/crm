@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useSort } from '@/hooks/useSort'
 import { createClient } from '@/utils/supabase/client'
 
 export default function GroupList({ onEdit }: { onEdit: (group: any) => void }) {
@@ -19,6 +20,7 @@ export default function GroupList({ onEdit }: { onEdit: (group: any) => void }) 
     if (error) throw error
     return data || []
   })
+  const { sorted: sortedGroups, sortKey, sortAsc, toggleSort } = useSort(groups ?? [], 'name')
 
   const handleArchive = async (id: string) => {
     if (!confirm('Переместить группу в архив?')) return
@@ -45,15 +47,19 @@ export default function GroupList({ onEdit }: { onEdit: (group: any) => void }) 
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-gray-100">
-            <th className="border p-2 text-left">Название</th>
-            <th className="border p-2 text-left">Предмет</th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('name')}>
+              Название {sortKey === 'name' && (sortAsc ? '↑' : '↓')}
+            </th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('subject')}>
+              Предмет {sortKey === 'subject' && (sortAsc ? '↑' : '↓')}
+            </th>
             <th className="border p-2 text-left">Преподаватель</th>
             <th className="border p-2 text-left">Действия</th>
           </tr>
         </thead>
         <tbody>
-          {groups?.map((g: any) => (
-            <tr key={g.id}>
+          {sortedGroups?.map((g: any) => (
+            <tr key={g.id} className="hover:bg-gray-50">
               <td className="border p-2"><button onClick={() => router.push(`/admin/groups/${g.id}`)} className="text-brand-600 hover:underline text-left">{g.name}</button></td>
               <td className="border p-2">{g.subject}</td>
               <td className="border p-2">{g.teacher?.full_name || '-'}</td>

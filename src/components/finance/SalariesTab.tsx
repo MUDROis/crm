@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useSort } from '@/hooks/useSort'
 import { createClient } from '@/utils/supabase/client'
 
 export default function SalariesTab() {
@@ -18,6 +19,7 @@ export default function SalariesTab() {
     if (error) throw error
     return data || []
   })
+  const { sorted: sortedSalaries, sortKey, sortAsc, toggleSort } = useSort(salaries ?? [], 'period_start')
 
   const { data: teachers } = useSupabaseQuery('teachers-for-salaries', async (supabase) => {
     const { data } = await supabase.from('profiles').select('id, full_name').eq('role', 'teacher')
@@ -82,15 +84,19 @@ export default function SalariesTab() {
         <thead>
           <tr className="bg-gray-100">
             <th className="border p-2 text-left">Преподаватель</th>
-            <th className="border p-2 text-left">Сумма</th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('amount')}>
+              Сумма {sortKey === 'amount' && (sortAsc ? '↑' : '↓')}
+            </th>
             <th className="border p-2 text-left">Период</th>
-            <th className="border p-2 text-left">Статус</th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('paid')}>
+              Статус {sortKey === 'paid' && (sortAsc ? '↑' : '↓')}
+            </th>
             <th className="border p-2 text-left">Действия</th>
           </tr>
         </thead>
         <tbody>
-          {salaries?.map((s: any) => (
-            <tr key={s.id}>
+          {sortedSalaries?.map((s: any) => (
+            <tr key={s.id} className="hover:bg-gray-50">
               <td className="border p-2">{s.profiles?.full_name || '-'}</td>
               <td className="border p-2">{s.amount}</td>
               <td className="border p-2">{s.period_start} – {s.period_end}</td>

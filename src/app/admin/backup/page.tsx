@@ -104,8 +104,6 @@ export default function BackupPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Резервное копирование</h1>
-
       {/* Полный бэкап */}
       <div className="bg-white p-6 rounded shadow mb-6">
         <h2 className="text-lg font-semibold mb-2">Полная копия всех данных</h2>

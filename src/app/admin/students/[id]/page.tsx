@@ -63,11 +63,11 @@ export default function StudentProfilePage() {
       <div className="bg-white rounded shadow p-6 mb-6">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-2xl font-bold">
+            <div className="text-2xl font-bold">
               <button onClick={() => setShowEditForm(true)} className="text-left hover:text-brand-600">
                 {student.full_name}
               </button>
-            </h1>
+            </div>
             <p className="text-gray-600 mt-1">
               {student.subject} В· {student.type === 'individual' ? 'РРЅРґРёРІРёРґСѓР°Р»СЊРЅРѕ' : 'Р“СЂСѓРїРїР°'}
             </p>

@@ -38,11 +38,11 @@ export default function TeacherProfilePage() {
       <div className="bg-white rounded shadow p-6 mb-6">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-2xl font-bold">
+            <div className="text-2xl font-bold">
               <button onClick={() => setShowEditForm(true)} className="text-left hover:text-brand-600">
                 {teacher.full_name}
               </button>
-            </h1>
+            </div>
             <p className="text-gray-600 mt-1">{teacher.email}</p>
             {teacher.phone && <p className="text-gray-600">{teacher.phone}</p>}
             <p className="text-sm mt-2">

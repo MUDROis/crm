@@ -40,7 +40,7 @@ export default function TeacherStudentProfilePage() {
     <div className="p-6">
       {/* РРЅС„РѕСЂРјР°С†РёСЏ РѕР± СѓС‡РµРЅРёРєРµ (С‚РѕР»СЊРєРѕ С‡С‚РµРЅРёРµ) */}
       <div className="bg-white rounded shadow p-6 mb-6">
-        <h1 className="text-2xl font-bold">{student.full_name}</h1>
+        <div className="text-2xl font-bold">{student.full_name}</div>
         <p className="text-gray-600 mt-1">
           {student.subject} В· {student.type === 'individual' ? 'РРЅРґРёРІРёРґСѓР°Р»СЊРЅРѕ' : 'Р“СЂСѓРїРїР°'}
         </p>

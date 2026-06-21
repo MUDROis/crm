@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useSort } from '@/hooks/useSort'
 import { createClient } from '@/utils/supabase/client'
 
 interface Student {
@@ -44,6 +45,7 @@ export default function StudentList() {
   const { data: teachers } = useSupabaseQuery('teachers-list', fetchTeachers)
   const filterKey = `students-${search}-${filterTeacher}-${filterSubject}-${filterStatus}`
   const { data: students, loading, refetch } = useSupabaseQuery(filterKey, fetchStudents)
+  const { sorted: sortedStudents, sortKey, sortAsc, toggleSort } = useSort(students ?? [], 'full_name')
 
   const handleArchive = async (id: string) => {
     if (!confirm('Переместить ученика в архив?')) return
@@ -117,17 +119,25 @@ export default function StudentList() {
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-gray-100">
-            <th className="border p-2 text-left">ФИО</th>
-            <th className="border p-2 text-left">Предмет</th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('full_name')}>
+              ФИО {sortKey === 'full_name' && (sortAsc ? '↑' : '↓')}
+            </th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('subject')}>
+              Предмет {sortKey === 'subject' && (sortAsc ? '↑' : '↓')}
+            </th>
             <th className="border p-2 text-left">Преподаватель</th>
-            <th className="border p-2 text-left">Тип</th>
-            <th className="border p-2 text-left">Заказчик</th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('type')}>
+              Тип {sortKey === 'type' && (sortAsc ? '↑' : '↓')}
+            </th>
+            <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('customer_name')}>
+              Заказчик {sortKey === 'customer_name' && (sortAsc ? '↑' : '↓')}
+            </th>
             <th className="border p-2 text-left">Действия</th>
           </tr>
         </thead>
         <tbody>
-          {students?.map((s: any) => (
-            <tr key={s.id}>
+          {sortedStudents?.map((s: any) => (
+            <tr key={s.id} className="hover:bg-gray-50">
               <td className="border p-2">
                 <Link href={`/admin/students/${s.id}`} className="text-brand-600 hover:underline">
                   {s.full_name}

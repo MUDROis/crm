@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useSort } from '@/hooks/useSort'
 import { createClient } from '@/utils/supabase/client'
 
 export default function StudentPausesTab({ studentId }: { studentId: string }) {
@@ -19,6 +20,7 @@ export default function StudentPausesTab({ studentId }: { studentId: string }) {
     if (error) throw error
     return data || []
   })
+  const { sorted: sortedPauses, sortKey, sortAsc, toggleSort } = useSort(pauses ?? [], 'start_date')
 
   const handleAdd = () => {
     setEditingPause(null)
@@ -98,15 +100,21 @@ export default function StudentPausesTab({ studentId }: { studentId: string }) {
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border p-2 text-left">Начало</th>
-              <th className="border p-2 text-left">Окончание</th>
-              <th className="border p-2 text-left">Причина</th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('start_date')}>
+                Начало {sortKey === 'start_date' && (sortAsc ? '↑' : '↓')}
+              </th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('end_date')}>
+                Окончание {sortKey === 'end_date' && (sortAsc ? '↑' : '↓')}
+              </th>
+              <th className="border p-2 text-left cursor-pointer hover:bg-gray-200 select-none" onClick={() => toggleSort('reason')}>
+                Причина {sortKey === 'reason' && (sortAsc ? '↑' : '↓')}
+              </th>
               <th className="border p-2 text-left">Действия</th>
             </tr>
           </thead>
           <tbody>
-            {pauses?.map((pause: any) => (
-              <tr key={pause.id}>
+            {sortedPauses?.map((pause: any) => (
+              <tr key={pause.id} className="hover:bg-gray-50">
                 <td className="border p-2 cursor-pointer hover:text-brand-600" onClick={() => handleEdit(pause)}>
                   {pause.start_date}
                 </td>

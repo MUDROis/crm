@@ -18,7 +18,6 @@ export default function FinancePage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Финансы</h1>
       <div className="flex gap-4 mb-6">
         {tabs.map(tab => (
           <button
