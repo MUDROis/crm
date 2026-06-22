@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import GeneralTab from './tabs/GeneralTab'
-import DirectoriesTab from './tabs/DirectoriesTab'
+import SubjectsTab from './tabs/SubjectsTab'
+import RoomsTab from './tabs/RoomsTab'
+import OnlineLinksTab from './tabs/OnlineLinksTab'
 import AppearanceTab from './tabs/AppearanceTab'
 import TriggersTab from './tabs/TriggersTab'
 import ReportsTab from './tabs/ReportsTab'
@@ -11,7 +13,9 @@ import SystemTab from './tabs/SystemTab'
 
 const tabs = [
   { key: 'general', label: 'Общие' },
-  { key: 'directories', label: 'Справочники' },
+  { key: 'subjects', label: 'Предметы' },
+  { key: 'rooms', label: 'Кабинеты' },
+  { key: 'online_links', label: 'Онлайн-ссылки' },
   { key: 'appearance', label: 'Оформление' },
   { key: 'triggers', label: 'Триггеры' },
   { key: 'reports', label: 'Отчётность' },
@@ -44,7 +48,9 @@ export default function SettingsPage() {
 
       <div className="bg-white rounded-xl shadow p-6">
         {activeTab === 'general' && <GeneralTab />}
-        {activeTab === 'directories' && <DirectoriesTab />}
+        {activeTab === 'subjects' && <SubjectsTab />}
+        {activeTab === 'rooms' && <RoomsTab />}
+        {activeTab === 'online_links' && <OnlineLinksTab />}
         {activeTab === 'appearance' && <AppearanceTab />}
         {activeTab === 'triggers' && <TriggersTab />}
         {activeTab === 'reports' && <ReportsTab />}

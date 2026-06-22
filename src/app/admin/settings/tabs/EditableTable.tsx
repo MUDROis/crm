@@ -3,19 +3,15 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 
-type TableDef = {
+type ColumnDef = { key: string; label: string }
+
+export type TableDef = {
   name: string
   label: string
-  columns: { key: string; label: string }[]
+  columns: ColumnDef[]
 }
 
-const tables: TableDef[] = [
-  { name: 'subjects', label: 'Предметы', columns: [{ key: 'name', label: 'Название' }] },
-  { name: 'rooms', label: 'Кабинеты', columns: [{ key: 'name', label: 'Название' }] },
-  { name: 'online_links', label: 'Ссылки на онлайн-занятия', columns: [{ key: 'name', label: 'Название' }, { key: 'url', label: 'URL' }] },
-]
-
-function EditableTable({ tableDef }: { tableDef: TableDef }) {
+export default function EditableTable({ tableDef }: { tableDef: TableDef }) {
   const [rows, setRows] = useState<Record<string, string>[]>([])
   const [newRow, setNewRow] = useState<Record<string, string>>({})
   const supabase = createClient()
@@ -41,7 +37,7 @@ function EditableTable({ tableDef }: { tableDef: TableDef }) {
   }
 
   const deleteRow = async (id: number) => {
-    if (!confirm(`Удалить?`)) return
+    if (!confirm('Удалить?')) return
     await supabase.from(tableDef.name).delete().eq('id', id)
     const { data } = await supabase.from(tableDef.name).select('*').order('id')
     if (data) setRows(data as Record<string, string>[])
@@ -49,7 +45,6 @@ function EditableTable({ tableDef }: { tableDef: TableDef }) {
 
   return (
     <div>
-      <h3 className="text-md font-semibold mb-3">{tableDef.label}</h3>
       <table className="w-full border-collapse mb-3">
         <thead>
           <tr className="bg-gray-100">
@@ -94,19 +89,6 @@ function EditableTable({ tableDef }: { tableDef: TableDef }) {
           Добавить
         </button>
       </div>
-    </div>
-  )
-}
-
-export default function DirectoriesTab() {
-  return (
-    <div className="space-y-8">
-      {tables.map(t => (
-        <div key={t.name}>
-          <EditableTable tableDef={t} />
-          <hr className="my-6" />
-        </div>
-      ))}
     </div>
   )
 }
