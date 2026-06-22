@@ -57,7 +57,8 @@ export default function TaskForm({
     setLoading(true)
 
     // Получаем текущего пользователя (админ)
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
 
     if (task?.id) {
       // Редактирование существующей задачи (created_by не меняем)

@@ -48,8 +48,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }: { data: { user: import('@supabase/supabase-js').User | null } }) => {
-      if (user) setUserId(user.id)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setUserId(session.user.id)
     }).catch(() => {
       // silent — пользователь просто не получит уведомления
     })

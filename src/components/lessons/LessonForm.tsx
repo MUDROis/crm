@@ -136,17 +136,18 @@ export default function LessonForm({
 
   async function loadData() {
     let studentsQuery = supabase.from('students').select('id, full_name, online_link')
+    let currentUser: { id: string } | null = null
     if (role === 'teacher') {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) studentsQuery = studentsQuery.eq('teacher_id', user.id)
+      const { data: { session } } = await supabase.auth.getSession()
+      currentUser = session?.user ?? null
+      if (currentUser) studentsQuery = studentsQuery.eq('teacher_id', currentUser.id)
     }
     const { data: studentsData } = await studentsQuery.order('full_name')
     if (studentsData) setStudents(studentsData)
 
     let groupsQuery = supabase.from('groups').select('id, name, online_link')
-    if (role === 'teacher') {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) groupsQuery = groupsQuery.eq('teacher_id', user.id)
+    if (role === 'teacher' && currentUser) {
+      groupsQuery = groupsQuery.eq('teacher_id', currentUser.id)
     }
     const { data: groupsData } = await groupsQuery.order('name')
     if (groupsData) setGroups(groupsData)
@@ -246,8 +247,8 @@ export default function LessonForm({
     if (dataToSave.group_id === '') dataToSave.group_id = null
 
     if (role === 'teacher' && !dataToSave.teacher_id) {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) dataToSave.teacher_id = user.id
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) dataToSave.teacher_id = session.user.id
     }
 
     if (dataToSave.teacher_id && dataToSave.start_time && dataToSave.end_time) {

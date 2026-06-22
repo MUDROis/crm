@@ -18,8 +18,8 @@ export default function TaskList({
   // Получаем userId для преподавателя
   useEffect(() => {
     if (role === 'teacher') {
-      supabase.auth.getUser().then(({ data }: { data: { user: { id: string } | null } }) => {
-        if (data.user) setUserId(data.user.id)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) setUserId(session.user.id)
       }).catch(() => {})
     } else {
       setUserId('admin') // фиктивный ключ
