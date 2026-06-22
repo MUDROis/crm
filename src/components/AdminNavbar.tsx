@@ -34,8 +34,8 @@ export default function AdminNavbar() {
         <Link href="/admin/teachers" className="text-2xl text-gray-600 hover:text-brand-600 transition">
           👨‍🏫
         </Link>
-        <Link href="/admin/backup" className="text-2xl text-gray-600 hover:text-brand-600 transition">
-          💾
+        <Link href="/admin/settings" className="text-2xl text-gray-600 hover:text-brand-600 transition">
+          ⚙️
         </Link>
       </div>
     </nav>

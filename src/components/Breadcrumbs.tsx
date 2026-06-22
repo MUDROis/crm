@@ -13,7 +13,7 @@ const segmentLabels: Record<string, string> = {
   finance: 'Финансы',
   reports: 'Отчёты',
   teachers: 'Преподаватели',
-  backup: 'Резервное копирование',
+  settings: 'Настройки',
 }
 
 function isUuid(segment: string): boolean {

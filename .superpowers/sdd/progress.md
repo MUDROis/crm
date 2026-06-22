@@ -3,3 +3,7 @@ Task 2: complete (commit a787ca0, review: SystemTab created, backup page deleted
 Task 3: complete (commit 33c726e)
 Task 4: complete (commit de4fcef)
 Task 5: complete (commit 81f023e)
+Task 6: complete (commit 33b8a14)
+Task 7: complete (commit 429f145)
+Task 8: complete (commit b56cb10)
+Task 9: complete (commit f0aecb4)
