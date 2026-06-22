@@ -4,12 +4,12 @@ import { useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import * as XLSX from 'xlsx'
 
-export default function BackupPage() {
+export default function SystemTab() {
   const [loading, setLoading] = useState(false)
   const [loadingTable, setLoadingTable] = useState<string | null>(null)
+  const [cleared, setCleared] = useState(false)
   const supabase = createClient()
 
-  // Выгрузка всей базы в JSON
   const handleBackupJSON = async () => {
     setLoading(true)
     try {
@@ -39,18 +39,7 @@ export default function BackupPage() {
 
       const backup = {
         exported_at: new Date().toISOString(),
-        data: {
-          profiles,
-          students,
-          groups,
-          group_students,
-          lessons,
-          subscriptions,
-          payments,
-          expenses,
-          salaries,
-          tasks,
-        },
+        data: { profiles, students, groups, group_students, lessons, subscriptions, payments, expenses, salaries, tasks },
       }
 
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
@@ -67,7 +56,6 @@ export default function BackupPage() {
     }
   }
 
-  // Экспорт конкретной таблицы в Excel
   const exportTableToExcel = async (tableName: string, fileName: string) => {
     setLoadingTable(tableName)
     try {
@@ -77,7 +65,6 @@ export default function BackupPage() {
         alert('Нет данных для экспорта')
         return
       }
-
       const ws = XLSX.utils.json_to_sheet(data)
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, tableName)
@@ -86,6 +73,15 @@ export default function BackupPage() {
       alert('Ошибка экспорта: ' + err.message)
     } finally {
       setLoadingTable(null)
+    }
+  }
+
+  const handleClearCache = () => {
+    if (confirm('Очистить кэш браузера для этого сайта?')) {
+      localStorage.clear()
+      sessionStorage.clear()
+      setCleared(true)
+      setTimeout(() => setCleared(false), 3000)
     }
   }
 
@@ -103,9 +99,28 @@ export default function BackupPage() {
   ]
 
   return (
-    <div className="p-6">
-      {/* Полный бэкап */}
-      <div className="bg-white p-6 rounded shadow mb-6">
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold mb-2">Системная информация</h2>
+        <div className="bg-gray-50 p-4 rounded-lg space-y-1 text-sm">
+          <div><span className="font-medium">Версия CRM:</span> 0.1.0</div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-md font-semibold mb-2">Инструменты</h3>
+        <button
+          onClick={handleClearCache}
+          className="bg-yellow-50 border border-yellow-300 text-yellow-800 px-4 py-2 rounded-lg hover:bg-yellow-100 transition"
+        >
+          Сбросить кэш браузера
+        </button>
+        {cleared && <span className="ml-2 text-green-600 text-sm">Кэш очищен</span>}
+      </div>
+
+      <hr />
+
+      <div className="bg-white p-6 rounded shadow">
         <h2 className="text-lg font-semibold mb-2">Полная копия всех данных</h2>
         <p className="mb-4 text-gray-600">Все таблицы будут сохранены в одном JSON-файле.</p>
         <button
@@ -117,7 +132,6 @@ export default function BackupPage() {
         </button>
       </div>
 
-      {/* Экспорт отдельных таблиц */}
       <div className="bg-white p-6 rounded shadow">
         <h2 className="text-lg font-semibold mb-4">Экспорт таблиц в Excel</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
