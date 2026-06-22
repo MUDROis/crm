@@ -1,13 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 export default function AppearanceTab() {
-  const [darkMode, setDarkMode] = useState(false)
-
-  useEffect(() => {
-    setDarkMode(document.documentElement.classList.contains('dark'))
-  }, [])
+  const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
 
   const toggleDark = () => {
     const next = !darkMode

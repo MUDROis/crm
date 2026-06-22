@@ -14,29 +14,26 @@ export default function GeneralTab() {
   const supabase = createClient()
 
   useEffect(() => {
-    loadSettings()
-  }, [])
-
-  async function loadSettings() {
-    const { data } = await supabase
+    supabase
       .from('settings')
       .select('*')
       .in('key', ['school_name', 'school_phone', 'school_email', 'working_hours'])
+      .then(({ data }) => {
+        if (data) {
+          const obj: Record<string, unknown> = {}
+          data.forEach(item => { obj[item.key] = item.value })
+          setSettings(prev => ({
+            ...prev,
+            school_name: (obj.school_name as string) ?? prev.school_name,
+            school_phone: (obj.school_phone as string) ?? prev.school_phone,
+            school_email: (obj.school_email as string) ?? prev.school_email,
+            working_hours: (obj.working_hours as { start: string; end: string }) ?? prev.working_hours,
+          }))
+        }
+      })
+  }, [])
 
-    if (data) {
-      const obj: any = {}
-      data.forEach(item => { obj[item.key] = item.value })
-      setSettings(prev => ({
-        ...prev,
-        school_name: obj.school_name ?? prev.school_name,
-        school_phone: obj.school_phone ?? prev.school_phone,
-        school_email: obj.school_email ?? prev.school_email,
-        working_hours: obj.working_hours ?? prev.working_hours,
-      }))
-    }
-  }
-
-  async function saveSetting(key: string, value: any) {
+  async function saveSetting(key: string, value: unknown) {
     const { error } = await supabase
       .from('settings')
       .upsert({ key, value }, { onConflict: 'key' })

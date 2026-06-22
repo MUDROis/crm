@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 
 type TableDef = {
@@ -16,23 +16,23 @@ const tables: TableDef[] = [
 ]
 
 function EditableTable({ tableDef }: { tableDef: TableDef }) {
-  const [rows, setRows] = useState<any[]>([])
+  const [rows, setRows] = useState<Record<string, string>[]>([])
   const [newRow, setNewRow] = useState<Record<string, string>>({})
   const supabase = createClient()
 
-  const load = useCallback(async () => {
-    const { data } = await supabase.from(tableDef.name).select('*').order('id')
-    setRows(data || [])
+  useEffect(() => {
+    supabase.from(tableDef.name).select('*').order('id').then(({ data }) => {
+      if (data) setRows(data as Record<string, string>[])
+    })
   }, [tableDef.name])
-
-  useEffect(() => { load() }, [load])
 
   const addRow = async () => {
     const values = Object.fromEntries(tableDef.columns.map(c => [c.key, newRow[c.key] || '']))
     if (!values[tableDef.columns[0].key]) return
     await supabase.from(tableDef.name).insert(values)
     setNewRow({})
-    await load()
+    const { data } = await supabase.from(tableDef.name).select('*').order('id')
+    if (data) setRows(data as Record<string, string>[])
   }
 
   const updateCell = async (id: number, key: string, value: string) => {
@@ -43,7 +43,8 @@ function EditableTable({ tableDef }: { tableDef: TableDef }) {
   const deleteRow = async (id: number) => {
     if (!confirm(`Удалить?`)) return
     await supabase.from(tableDef.name).delete().eq('id', id)
-    await load()
+    const { data } = await supabase.from(tableDef.name).select('*').order('id')
+    if (data) setRows(data as Record<string, string>[])
   }
 
   return (

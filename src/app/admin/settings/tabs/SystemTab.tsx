@@ -49,8 +49,8 @@ export default function SystemTab() {
       a.download = `crm-backup-${new Date().toISOString().slice(0, 10)}.json`
       a.click()
       URL.revokeObjectURL(url)
-    } catch (err: any) {
-      alert('Ошибка: ' + err.message)
+    } catch (err: unknown) {
+      alert('Ошибка: ' + (err as Error).message)
     } finally {
       setLoading(false)
     }
@@ -69,8 +69,8 @@ export default function SystemTab() {
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, tableName)
       XLSX.writeFile(wb, `${fileName}.xlsx`)
-    } catch (err: any) {
-      alert('Ошибка экспорта: ' + err.message)
+    } catch (err: unknown) {
+      alert('Ошибка экспорта: ' + (err as Error).message)
     } finally {
       setLoadingTable(null)
     }
