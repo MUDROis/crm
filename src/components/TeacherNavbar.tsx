@@ -29,8 +29,9 @@ export default function TeacherNavbar({ pendingCount = 0 }: TeacherNavbarProps) 
             .then(({ count }: { count: number | null }) => {
               if (count !== null) setCount(count)
             })
+            .catch(() => {})
         }
-      })
+      }).catch(() => {})
     }
   }, [pendingCount])
 

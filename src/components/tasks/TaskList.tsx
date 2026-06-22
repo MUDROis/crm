@@ -20,7 +20,7 @@ export default function TaskList({
     if (role === 'teacher') {
       supabase.auth.getUser().then(({ data }: { data: { user: { id: string } | null } }) => {
         if (data.user) setUserId(data.user.id)
-      })
+      }).catch(() => {})
     } else {
       setUserId('admin') // фиктивный ключ
     }
