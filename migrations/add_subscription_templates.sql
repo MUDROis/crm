@@ -1,14 +1,27 @@
--- Lesson types reference
-create table if not exists lesson_types (
+-- Lesson types reference (drop + recreate for clean state)
+drop table if exists lesson_types cascade;
+create table lesson_types (
   id bigint primary key generated always as identity,
   name text not null unique
 );
-
--- Clean and reseed (safe for re-runs)
-delete from lesson_types;
 insert into lesson_types (name) values
   ('Индивидуальный'),
   ('Групповой');
+
+alter table lesson_types enable row level security;
+
+drop policy if exists "Anyone can read lesson_types" on lesson_types;
+create policy "Anyone can read lesson_types"
+  on lesson_types for select
+  to authenticated
+  using (true);
+
+drop policy if exists "Admins can manage lesson_types" on lesson_types;
+create policy "Admins can manage lesson_types"
+  on lesson_types for all
+  to authenticated
+  using (auth.jwt()->>'role' = 'admin')
+  with check (auth.jwt()->>'role' = 'admin');
 
 -- Drop old tables for clean re-run (safe — no production data yet)
 drop table if exists subscription_template_lesson_types;

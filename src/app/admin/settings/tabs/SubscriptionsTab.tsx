@@ -91,7 +91,11 @@ export default function SubscriptionsTab() {
     ]).then(([templatesRes, subjectsRes, lessonTypesRes]) => {
       if (templatesRes.data) setTemplates(templatesRes.data as Record<string, unknown>[])
       if (subjectsRes.data) setSubjects(subjectsRes.data as Record<string, unknown>[])
-      if (lessonTypesRes.data) setLessonTypes(lessonTypesRes.data as Record<string, unknown>[])
+      if (lessonTypesRes.error) {
+        showNotification('error', 'Ошибка загрузки типов уроков: ' + lessonTypesRes.error.message)
+      } else if (lessonTypesRes.data) {
+        setLessonTypes(lessonTypesRes.data as Record<string, unknown>[])
+      }
       setLoading(false)
     })
   }, [])
