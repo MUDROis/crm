@@ -265,7 +265,7 @@ export default function LessonForm({
       }
     }
 
-    if (repeat && !form.id && !prefillData) {
+    if (repeat && !form.id) {
       const startDate = new Date(dataToSave.lesson_date)
       for (let i = 0; i < repeatWeeks; i++) {
         const date = new Date(startDate)
@@ -426,7 +426,7 @@ export default function LessonForm({
                 <option value="cancelled">Отменён</option>
               </select>
             </div>
-            {!form.id && !prefillData && (
+            {!form.id && (
               <div className="col-span-2">
                 <label className="flex items-center space-x-2">
                   <input type="checkbox" checked={repeat} onChange={(e) => setRepeat(e.target.checked)} />
