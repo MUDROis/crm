@@ -42,10 +42,12 @@ export default function GeneralTab() {
       { key: 'school_email', value: settings.school_email },
       { key: 'working_hours', value: settings.working_hours },
     ]
-    await Promise.all(entries.map(e => supabase.from('settings').upsert(e, { onConflict: 'key' })))
+    const { error } = await supabase.from('settings').upsert(entries, { onConflict: 'key' })
     setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    if (!error) {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    }
   }
 
   return (
