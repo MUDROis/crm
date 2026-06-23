@@ -10,6 +10,7 @@ export default function GeneralTab() {
     school_email: '',
     working_hours: { start: '09:00', end: '21:00' },
   })
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const supabase = createClient()
 
@@ -33,14 +34,18 @@ export default function GeneralTab() {
       })
   }, [])
 
-  async function saveSetting(key: string, value: unknown) {
-    const { error } = await supabase
-      .from('settings')
-      .upsert({ key, value }, { onConflict: 'key' })
-    if (!error) {
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    }
+  async function saveAll() {
+    setSaving(true)
+    const entries = [
+      { key: 'school_name', value: settings.school_name },
+      { key: 'school_phone', value: settings.school_phone },
+      { key: 'school_email', value: settings.school_email },
+      { key: 'working_hours', value: settings.working_hours },
+    ]
+    await Promise.all(entries.map(e => supabase.from('settings').upsert(e, { onConflict: 'key' })))
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
   return (
@@ -48,9 +53,7 @@ export default function GeneralTab() {
       <h2 className="text-lg font-semibold">Общие настройки школы</h2>
 
       {saved && (
-        <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm">
-          Настройки сохранены
-        </div>
+        <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm">Настройки сохранены</div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -59,7 +62,7 @@ export default function GeneralTab() {
           <input
             type="text"
             value={settings.school_name}
-            onChange={e => { setSettings(p => ({ ...p, school_name: e.target.value })); saveSetting('school_name', e.target.value) }}
+            onChange={e => setSettings(p => ({ ...p, school_name: e.target.value }))}
             className="mt-1 w-full border p-2 rounded-lg"
           />
         </div>
@@ -68,7 +71,7 @@ export default function GeneralTab() {
           <input
             type="text"
             value={settings.school_phone}
-            onChange={e => { setSettings(p => ({ ...p, school_phone: e.target.value })); saveSetting('school_phone', e.target.value) }}
+            onChange={e => setSettings(p => ({ ...p, school_phone: e.target.value }))}
             className="mt-1 w-full border p-2 rounded-lg"
           />
         </div>
@@ -77,7 +80,7 @@ export default function GeneralTab() {
           <input
             type="email"
             value={settings.school_email}
-            onChange={e => { setSettings(p => ({ ...p, school_email: e.target.value })); saveSetting('school_email', e.target.value) }}
+            onChange={e => setSettings(p => ({ ...p, school_email: e.target.value }))}
             className="mt-1 w-full border p-2 rounded-lg"
           />
         </div>
@@ -87,19 +90,23 @@ export default function GeneralTab() {
             <input
               type="time"
               value={settings.working_hours.start}
-              onChange={e => { const updated = { ...settings.working_hours, start: e.target.value }; setSettings(p => ({ ...p, working_hours: updated })); saveSetting('working_hours', updated) }}
+              onChange={e => setSettings(p => ({ ...p, working_hours: { ...p.working_hours, start: e.target.value } }))}
               className="border p-2 rounded-lg w-32"
             />
             <span className="self-center">—</span>
             <input
               type="time"
               value={settings.working_hours.end}
-              onChange={e => { const updated = { ...settings.working_hours, end: e.target.value }; setSettings(p => ({ ...p, working_hours: updated })); saveSetting('working_hours', updated) }}
+              onChange={e => setSettings(p => ({ ...p, working_hours: { ...p.working_hours, end: e.target.value } }))}
               className="border p-2 rounded-lg w-32"
             />
           </div>
         </div>
       </div>
+
+      <button onClick={saveAll} disabled={saving} className="bg-brand-600 text-white px-6 py-2 rounded-lg hover:bg-brand-700 disabled:opacity-50">
+        {saving ? 'Сохранение...' : 'Сохранить'}
+      </button>
     </div>
   )
 }

@@ -14,6 +14,8 @@ const permissions = [
 
 export default function RolesTab() {
   const [perms, setPerms] = useState<Record<string, boolean>>({})
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -24,16 +26,27 @@ export default function RolesTab() {
     })
   }, [])
 
-  const toggle = async (key: string) => {
-    const next = { ...perms, [key]: !perms[key] }
-    setPerms(next)
-    await supabase.from('settings').upsert({ key: 'teacher_permissions', value: next }, { onConflict: 'key' })
+  const toggle = (key: string) => {
+    setPerms(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  async function saveAll() {
+    setSaving(true)
+    await supabase.from('settings').upsert({ key: 'teacher_permissions', value: perms }, { onConflict: 'key' })
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Права преподавателей</h2>
       <p className="text-sm text-gray-600">Настройте, что могут делать преподаватели.</p>
+
+      {saved && (
+        <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm">Настройки сохранены</div>
+      )}
+
       {permissions.map(p => (
         <label key={p.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer">
           <span>{p.label}</span>
@@ -45,6 +58,10 @@ export default function RolesTab() {
           />
         </label>
       ))}
+
+      <button onClick={saveAll} disabled={saving} className="bg-brand-600 text-white px-6 py-2 rounded-lg hover:bg-brand-700 disabled:opacity-50">
+        {saving ? 'Сохранение...' : 'Сохранить'}
+      </button>
     </div>
   )
 }

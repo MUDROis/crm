@@ -15,6 +15,8 @@ const reportFields = [
 
 export default function ReportsTab() {
   const [fields, setFields] = useState<Record<string, boolean>>({})
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -25,16 +27,27 @@ export default function ReportsTab() {
     })
   }, [])
 
-  const toggle = async (key: string) => {
-    const next = { ...fields, [key]: !fields[key] }
-    setFields(next)
-    await supabase.from('settings').upsert({ key: 'report_fields', value: next }, { onConflict: 'key' })
+  const toggle = (key: string) => {
+    setFields(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  async function saveAll() {
+    setSaving(true)
+    await supabase.from('settings').upsert({ key: 'report_fields', value: fields }, { onConflict: 'key' })
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Поля отчётности</h2>
       <p className="text-sm text-gray-600">Выберите, какие поля показывать в отчётах.</p>
+
+      {saved && (
+        <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm">Настройки сохранены</div>
+      )}
+
       {reportFields.map(f => (
         <label key={f.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer">
           <span>{f.label}</span>
@@ -46,6 +59,10 @@ export default function ReportsTab() {
           />
         </label>
       ))}
+
+      <button onClick={saveAll} disabled={saving} className="bg-brand-600 text-white px-6 py-2 rounded-lg hover:bg-brand-700 disabled:opacity-50">
+        {saving ? 'Сохранение...' : 'Сохранить'}
+      </button>
     </div>
   )
 }
