@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import GeneralTab from './tabs/GeneralTab'
 import SubjectsTab from './tabs/SubjectsTab'
 import RoomsTab from './tabs/RoomsTab'
 import OnlineLinksTab from './tabs/OnlineLinksTab'
@@ -13,7 +12,6 @@ import RolesTab from './tabs/RolesTab'
 import SystemTab from './tabs/SystemTab'
 
 const tabs = [
-  { key: 'general', label: 'Общие' },
   { key: 'subjects', label: 'Предметы' },
   { key: 'rooms', label: 'Кабинеты' },
   { key: 'online_links', label: 'Онлайн-ссылки' },
@@ -26,7 +24,7 @@ const tabs = [
 ]
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('general')
+  const [activeTab, setActiveTab] = useState('subjects')
 
   return (
     <div className="p-6">
@@ -47,7 +45,6 @@ export default function SettingsPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow p-6">
-        {activeTab === 'general' && <GeneralTab />}
         {activeTab === 'subjects' && <SubjectsTab />}
         {activeTab === 'rooms' && <RoomsTab />}
         {activeTab === 'online_links' && <OnlineLinksTab />}
