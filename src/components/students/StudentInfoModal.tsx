@@ -20,12 +20,21 @@ interface Subscription {
   id: string
   total_lessons: number
   remaining_lessons: number
+  cost: number
   valid_until: string | null
+}
+
+interface Payment {
+  id: string
+  amount: number
+  subscription_id: string | null
+  type: string
 }
 
 export default function StudentInfoModal({ studentId, onClose }: { studentId: string; onClose: () => void }) {
   const [student, setStudent] = useState<any>(null)
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
+  const [payments, setPayments] = useState<Payment[]>([])
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -56,7 +65,7 @@ export default function StudentInfoModal({ studentId, onClose }: { studentId: st
 
     try {
       // Параллельная загрузка независимых данных
-      const [studentResult, subsResult, individualLessonsResult, groupsResult] = await Promise.all([
+      const [studentResult, subsResult, paymentsResult, individualLessonsResult, groupsResult] = await Promise.all([
         supabase
           .from('students')
           .select('*, teacher:profiles!teacher_id(full_name)')
@@ -68,6 +77,12 @@ export default function StudentInfoModal({ studentId, onClose }: { studentId: st
           .select('*')
           .eq('student_id', studentId)
           .order('created_at', { ascending: false }),
+
+        supabase
+          .from('payments')
+          .select('*')
+          .eq('student_id', studentId)
+          .eq('type', 'subscription'),
 
         supabase
           .from('lessons')
@@ -84,6 +99,7 @@ export default function StudentInfoModal({ studentId, onClose }: { studentId: st
 
       setStudent(studentResult.data)
       setSubscriptions(subsResult.data || [])
+      setPayments(paymentsResult.data || [])
 
       // Загрузка групповых уроков только если есть группы
       let groupLessonData: any[] = []
@@ -173,17 +189,29 @@ export default function StudentInfoModal({ studentId, onClose }: { studentId: st
                   <tr className="bg-gray-100">
                     <th className="border p-2 text-left">Всего занятий</th>
                     <th className="border p-2 text-left">Осталось</th>
+                    <th className="border p-2 text-left">Стоимость</th>
+                    <th className="border p-2 text-left">Остаток ₽</th>
                     <th className="border p-2 text-left">Действует до</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {subscriptions.map(sub => (
-                    <tr key={sub.id}>
-                      <td className="border p-2">{sub.total_lessons}</td>
-                      <td className="border p-2">{sub.remaining_lessons}</td>
-                      <td className="border p-2">{sub.valid_until || 'Без срока'}</td>
-                    </tr>
-                  ))}
+                  {subscriptions.map(sub => {
+                    const subPayments = payments.filter(p => p.subscription_id === sub.id)
+                    const paid = subPayments.length > 0
+                      ? subPayments.reduce((sum, p) => sum + p.amount, 0)
+                      : (sub.cost || 0)
+                    const costPerLesson = sub.total_lessons > 0 ? paid / sub.total_lessons : 0
+                    const remainingRubles = sub.remaining_lessons * costPerLesson
+                    return (
+                      <tr key={sub.id}>
+                        <td className="border p-2">{sub.total_lessons}</td>
+                        <td className="border p-2">{sub.remaining_lessons}</td>
+                        <td className="border p-2">{(sub.cost || 0).toLocaleString()} ₽</td>
+                        <td className="border p-2">{Math.round(remainingRubles).toLocaleString()} ₽</td>
+                        <td className="border p-2">{sub.valid_until || 'Без срока'}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             )}

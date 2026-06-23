@@ -44,14 +44,12 @@ export function useSupabaseQuery<T = any>(
     abortControllerRef.current = controller
     const signal = controller.signal
 
-    async function runQuery() {
+    async function runQuery(retryCount = 0) {
       if (refreshCounter > 0) {
-        // Ручное обновление – сбрасываем кэш
         cache.delete(key)
         setData(null)
         setLoading(true)
       } else if (cache.has(key)) {
-        // Данные уже в кэше – сразу отдаём
         setData(cache.get(key))
         setLoading(false)
         return
@@ -62,10 +60,8 @@ export function useSupabaseQuery<T = any>(
       try {
         const result = await fetcherRef.current(supabase)
 
-        // Если запрос был отменён, не обновляем состояние
         if (signal.aborted) return
 
-        // Если результат содержит поле error (как у Supabase), выбрасываем его
         if (
           result &&
           typeof result === 'object' &&
@@ -75,29 +71,37 @@ export function useSupabaseQuery<T = any>(
           throw result.error
         }
 
-        // Сохраняем результат в кэш
         cache.set(key, result)
         setData(result)
         setLoading(false)
         if (refreshCounter > 0) setRefreshCounter(0)
       } catch (err: any) {
-        // AbortError – нормальная ситуация при отмене запроса
         if (err.name !== 'AbortError') {
           const errorMessage = err?.message || err || 'Неизвестная ошибка'
+
+          // Автоповтор при сетевых ошибках (до 3 раз, с задержкой)
+          if (errorMessage.includes('Failed to fetch') && retryCount < 3) {
+            const delay = Math.min(1000 * Math.pow(2, retryCount), 4000)
+            console.warn(`Сетевая ошибка, повтор ${retryCount + 1}/3 через ${delay}мс...`)
+            await new Promise(resolve => setTimeout(resolve, delay))
+            if (!signal.aborted) {
+              return runQuery(retryCount + 1)
+            }
+          }
+
           console.error(`Ошибка запроса (${key}):`, errorMessage)
-          
-          // Добавляем подсказку для типичных проблем
+
           if (errorMessage.includes('Failed to fetch')) {
             console.error(
               'Подсказка: Ошибка "Failed to fetch" обычно означает:\n' +
-              '1. Проверьте подключение к интернету\n' +
-              '2. Убедитесь, что NEXT_PUBLIC_SUPABASE_URL в .env.local правильный\n' +
-              '3. Убедитесь, что NEXT_PUBLIC_SUPABASE_ANON_KEY в .env.local правильный\n' +
-              '4. Проверьте, что Supabase проект не заблокирован или не истёк срок действия\n' +
-              '5. Проверьте настройки CORS в Supabase dashboard (Network > API Settings)'
+              '1. Supabase проект мог уснуть (бесплатный тариф) — зайдите в дашборд Supabase и нажмите "Wake up"\n' +
+              '2. Проверьте подключение к интернету\n' +
+              '3. Убедитесь, что NEXT_PUBLIC_SUPABASE_URL в .env.local правильный\n' +
+              '4. Убедитесь, что NEXT_PUBLIC_SUPABASE_ANON_KEY в .env.local правильный\n' +
+              '5. Проверьте настройки CORS в Supabase dashboard (Settings > API)'
             )
           }
-          
+
           setLoading(false)
         }
       }

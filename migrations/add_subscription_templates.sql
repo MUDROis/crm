@@ -20,8 +20,8 @@ drop policy if exists "Admins can manage lesson_types" on lesson_types;
 create policy "Admins can manage lesson_types"
   on lesson_types for all
   to authenticated
-  using (auth.jwt()->>'role' = 'admin')
-  with check (auth.jwt()->>'role' = 'admin');
+  using (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
+  with check (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
 
 -- Drop old tables for clean re-run (safe — no production data yet)
 drop table if exists subscription_template_lesson_types;
@@ -36,6 +36,7 @@ create table subscription_templates (
   lesson_count integer check (lesson_count > 0),
   lesson_duration integer check (lesson_duration > 0),
   cost numeric(10, 2) not null check (cost >= 0),
+  status text not null default 'active' check (status in ('active', 'archived')),
   valid_until date,
   skip_respectful_coeff numeric(5, 2) not null default 0,
   skip_truant_coeff numeric(5, 2) not null default 1,
@@ -65,17 +66,18 @@ alter table subscription_template_lesson_types enable row level security;
 drop policy if exists "Admins can manage subscription_templates" on subscription_templates;
 create policy "Admins can manage subscription_templates"
   on subscription_templates to authenticated
-  using (auth.jwt()->>'role' = 'admin')
-  with check (auth.jwt()->>'role' = 'admin');
+  using (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
+  with check (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
+
 
 drop policy if exists "Admins can manage subscription_template_subjects" on subscription_template_subjects;
 create policy "Admins can manage subscription_template_subjects"
   on subscription_template_subjects to authenticated
-  using (auth.jwt()->>'role' = 'admin')
-  with check (auth.jwt()->>'role' = 'admin');
+  using (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
+  with check (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
 
 drop policy if exists "Admins can manage subscription_template_lesson_types" on subscription_template_lesson_types;
 create policy "Admins can manage subscription_template_lesson_types"
   on subscription_template_lesson_types to authenticated
-  using (auth.jwt()->>'role' = 'admin')
-  with check (auth.jwt()->>'role' = 'admin');
+  using (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
+  with check (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin'));

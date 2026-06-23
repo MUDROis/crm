@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useSort } from '@/hooks/useSort'
 import { createClient } from '@/utils/supabase/client'
@@ -8,7 +8,7 @@ import { createClient } from '@/utils/supabase/client'
 export default function StudentPaymentsTab({ studentId }: { studentId: string }) {
   const [showForm, setShowForm] = useState(false)
   const [editingPayment, setEditingPayment] = useState<any>(null)
-  const [form, setForm] = useState({ amount: '', payment_date: new Date().toISOString().split('T')[0], description: '', type: 'single' })
+  const [form, setForm] = useState({ amount: '', payment_date: new Date().toISOString().split('T')[0], description: '', type: 'single', subscription_id: '' })
   const supabase = createClient()
 
   const { data: payments, loading, refetch } = useSupabaseQuery(`student-payments-${studentId}`, async (supabase) => {
@@ -22,9 +22,25 @@ export default function StudentPaymentsTab({ studentId }: { studentId: string })
   })
   const { sorted: sortedPayments, sortKey, sortAsc, toggleSort } = useSort(payments ?? [], 'payment_date')
 
+  const { data: subscriptions } = useSupabaseQuery(`student-subs-for-payments-${studentId}`, async (supabase) => {
+    const { data } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false })
+    return data || []
+  })
+
+  const pricePerLesson = useMemo(() => {
+    if (!form.subscription_id) return null
+    const sub = subscriptions?.find((s: any) => s.id === form.subscription_id)
+    if (!sub || !sub.total_lessons || sub.total_lessons <= 0) return null
+    return (sub.cost || 0) / sub.total_lessons
+  }, [form.subscription_id, subscriptions])
+
   const handleAdd = () => {
     setEditingPayment(null)
-    setForm({ amount: '', payment_date: new Date().toISOString().split('T')[0], description: '', type: 'single' })
+    setForm({ amount: '', payment_date: new Date().toISOString().split('T')[0], description: '', type: 'single', subscription_id: '' })
     setShowForm(true)
   }
 
@@ -35,6 +51,7 @@ export default function StudentPaymentsTab({ studentId }: { studentId: string })
       payment_date: payment.payment_date,
       description: payment.description || '',
       type: payment.type,
+      subscription_id: payment.subscription_id || '',
     })
     setShowForm(true)
   }
@@ -44,22 +61,30 @@ export default function StudentPaymentsTab({ studentId }: { studentId: string })
     setEditingPayment(null)
   }
 
+  const handleSubscriptionChange = (subId: string) => {
+    const sub = subscriptions?.find((s: any) => s.id === subId)
+    setForm({
+      ...form,
+      subscription_id: subId,
+      amount: sub ? String(sub.cost || 0) : form.amount,
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const payload: Record<string, unknown> = {
+      amount: parseFloat(form.amount),
+      payment_date: form.payment_date,
+      description: form.description,
+      type: form.type,
+      subscription_id: form.type === 'subscription' ? (form.subscription_id || null) : null,
+    }
     if (editingPayment) {
-      await supabase.from('payments').update({
-        amount: parseFloat(form.amount),
-        payment_date: form.payment_date,
-        description: form.description,
-        type: form.type,
-      }).eq('id', editingPayment.id)
+      await supabase.from('payments').update(payload).eq('id', editingPayment.id)
     } else {
       await supabase.from('payments').insert({
+        ...payload,
         student_id: studentId,
-        amount: parseFloat(form.amount),
-        payment_date: form.payment_date,
-        description: form.description,
-        type: form.type,
       })
     }
     handleClose()
@@ -135,11 +160,34 @@ export default function StudentPaymentsTab({ studentId }: { studentId: string })
               </div>
               <div>
                 <label className="block text-sm">Тип</label>
-                <select value={form.type} onChange={(e) => setForm({...form, type: e.target.value})} className="w-full border p-2 rounded">
+                <select value={form.type} onChange={(e) => setForm({...form, type: e.target.value, subscription_id: e.target.value === 'single' ? '' : form.subscription_id})} className="w-full border p-2 rounded">
                   <option value="single">Разовый</option>
                   <option value="subscription">Абонемент</option>
                 </select>
               </div>
+              {form.type === 'subscription' && (
+                <div>
+                  <label className="block text-sm">Абонемент</label>
+                  <select value={form.subscription_id} onChange={(e) => handleSubscriptionChange(e.target.value)} className="w-full border p-2 rounded">
+                    <option value="">Выберите...</option>
+                    {subscriptions?.map((s: any) => (
+                      <option key={s.id} value={s.id}>
+                        {s.total_lessons} зн. · {(s.cost || 0).toLocaleString()} ₽ · ост. {s.remaining_lessons}
+                      </option>
+                    ))}
+                  </select>
+                  {pricePerLesson !== null && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Цена за занятие: {pricePerLesson.toFixed(2)} ₽
+                    </p>
+                  )}
+                  {!editingPayment && form.subscription_id && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Сумма автоматически подставлена из стоимости абонемента. Вы можете изменить её вручную.
+                    </p>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="block text-sm">Описание</label>
                 <input type="text" value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} className="w-full border p-2 rounded" />

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import StudentForm from '@/components/students/StudentForm'
 import StudentTabs from '@/components/students/StudentTabs'
+import StudentBalanceCard from '@/components/students/StudentBalanceCard'
 import LessonCalendar from '@/components/lessons/LessonCalendar'
 import LessonForm from '@/components/lessons/LessonForm'
 
@@ -80,6 +81,7 @@ export default function StudentProfilePage() {
               </span>
             </p>
             {student.notes && <p className="text-sm text-gray-500 mt-2">{student.notes}</p>}
+            <StudentBalanceCard studentId={studentId} />
           </div>
           <button onClick={() => { setSelectedDate(new Date().toISOString().split('T')[0]); setShowNewLessonForm(true) }}
             className="bg-success text-white px-4 py-2 rounded hover:bg-success">

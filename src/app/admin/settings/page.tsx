@@ -4,7 +4,6 @@ import { useState } from 'react'
 import SubjectsTab from './tabs/SubjectsTab'
 import RoomsTab from './tabs/RoomsTab'
 import OnlineLinksTab from './tabs/OnlineLinksTab'
-import SubscriptionsTab from './tabs/SubscriptionsTab'
 import AppearanceTab from './tabs/AppearanceTab'
 import TriggersTab from './tabs/TriggersTab'
 import ReportsTab from './tabs/ReportsTab'
@@ -15,7 +14,6 @@ const tabs = [
   { key: 'subjects', label: 'Предметы' },
   { key: 'rooms', label: 'Кабинеты' },
   { key: 'online_links', label: 'Онлайн-ссылки' },
-  { key: 'subscriptions', label: 'Абонементы' },
   { key: 'appearance', label: 'Оформление' },
   { key: 'triggers', label: 'Триггеры' },
   { key: 'reports', label: 'Отчётность' },
@@ -48,7 +46,6 @@ export default function SettingsPage() {
         {activeTab === 'subjects' && <SubjectsTab />}
         {activeTab === 'rooms' && <RoomsTab />}
         {activeTab === 'online_links' && <OnlineLinksTab />}
-        {activeTab === 'subscriptions' && <SubscriptionsTab />}
         {activeTab === 'appearance' && <AppearanceTab />}
         {activeTab === 'triggers' && <TriggersTab />}
         {activeTab === 'reports' && <ReportsTab />}
