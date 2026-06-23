@@ -21,6 +21,7 @@ export function useSupabaseQuery<T = any>(
 ) {
   const [data, setData] = useState<T | null>(() => cache.get(key) || null)
   const [loading, setLoading] = useState(!cache.has(key))
+  const [error, setError] = useState<string | null>(null)
   const [refreshCounter, setRefreshCounter] = useState(0)
   const supabase = getSupabase()
   const fetcherRef = useRef(fetcher)
@@ -73,6 +74,7 @@ export function useSupabaseQuery<T = any>(
 
         cache.set(key, result)
         setData(result)
+        setError(null)
         setLoading(false)
         if (refreshCounter > 0) setRefreshCounter(0)
       } catch (err: any) {
@@ -89,6 +91,7 @@ export function useSupabaseQuery<T = any>(
             }
           }
 
+          setError(errorMessage)
           console.error(`Ошибка запроса (${key}):`, errorMessage)
 
           if (errorMessage.includes('Failed to fetch')) {
@@ -96,9 +99,8 @@ export function useSupabaseQuery<T = any>(
               'Подсказка: Ошибка "Failed to fetch" обычно означает:\n' +
               '1. Supabase проект мог уснуть (бесплатный тариф) — зайдите в дашборд Supabase и нажмите "Wake up"\n' +
               '2. Проверьте подключение к интернету\n' +
-              '3. Убедитесь, что NEXT_PUBLIC_SUPABASE_URL в .env.local правильный\n' +
-              '4. Убедитесь, что NEXT_PUBLIC_SUPABASE_ANON_KEY в .env.local правильный\n' +
-              '5. Проверьте настройки CORS в Supabase dashboard (Settings > API)'
+              '3. Проверьте настройки CORS в Supabase dashboard (Settings > API) — укажите URL вашего сайта\n' +
+              '4. Убедитесь, что NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY в .env.local правильные'
             )
           }
 
@@ -114,5 +116,5 @@ export function useSupabaseQuery<T = any>(
     }
   }, [key, refreshCounter, supabase])
 
-  return { data, loading, refetch, supabase }
+  return { data, loading, error, refetch, supabase }
 }

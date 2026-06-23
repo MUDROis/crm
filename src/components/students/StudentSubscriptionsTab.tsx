@@ -69,7 +69,7 @@ export default function StudentSubscriptionsTab({ studentId }: { studentId: stri
       })
   }, [])
 
-  const { data: subscriptions, loading, refetch } = useSupabaseQuery(`student-subscriptions-${studentId}`, async (supabase) => {
+  const { data: subscriptions, loading, error: queryError, refetch } = useSupabaseQuery(`student-subscriptions-${studentId}`, async (supabase) => {
     const { data, error } = await supabase
       .from('subscriptions')
       .select('*')
@@ -213,15 +213,29 @@ export default function StudentSubscriptionsTab({ studentId }: { studentId: stri
 
   if (loading) return <p>Загрузка...</p>
 
+  if (queryError) {
+    console.warn('queryError:', queryError)
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">Абонементы</h3>
         <button onClick={handleAdd} className="bg-success text-white px-3 py-1 rounded">+ Добавить</button>
       </div>
-      {subscriptions?.length === 0 ? (
+      {queryError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-700 text-sm mb-2">
+            Не удалось загрузить абонементы. Проверьте подключение к Supabase или нажмите "Повторить".
+          </p>
+          <button onClick={() => refetch()} className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">
+            Повторить
+          </button>
+        </div>
+      )}
+      {!queryError && subscriptions?.length === 0 ? (
         <p>Нет абонементов</p>
-      ) : (
+      ) : !queryError && (
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-100">
