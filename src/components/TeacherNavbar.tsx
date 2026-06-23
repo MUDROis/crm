@@ -18,7 +18,8 @@ export default function TeacherNavbar({ pendingCount = 0 }: TeacherNavbarProps) 
     if (pendingCount === 0) {
       const supabase = createClient()
       
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      supabase.auth.getSession().then((res: any) => {
+        const session = res.data?.session
         if (session?.user) {
           const userId = session.user.id
           supabase

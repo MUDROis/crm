@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import type { PostgrestSingleResponse } from '@supabase/supabase-js'
 
 const permissions = [
   { key: 'teacher_create_lessons', label: 'Создавать уроки' },
@@ -19,9 +20,10 @@ export default function RolesTab() {
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.from('settings').select('*').eq('key', 'teacher_permissions').then(({ data }) => {
-      if (data?.[0]?.value) {
-        setPerms(data[0].value as Record<string, boolean>)
+    supabase.from('settings').select('*').eq('key', 'teacher_permissions').then((res: PostgrestSingleResponse<unknown>) => {
+      const row = (res.data as Record<string, unknown>[] | null)?.[0]
+      if (row?.value) {
+        setPerms(row.value as Record<string, boolean>)
       }
     })
   }, [])

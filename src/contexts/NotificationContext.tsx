@@ -48,7 +48,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then((res: any) => {
+      const session = res.data?.session
       if (session?.user) setUserId(session.user.id)
     }).catch(() => {
       // silent — пользователь просто не получит уведомления

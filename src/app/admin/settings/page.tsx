@@ -27,16 +27,16 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('subjects')
 
   return (
-    <div className="p-6">
-      <div className="flex gap-1 mb-6 border-b pb-1 overflow-x-auto">
+    <div className="p-6 dark:text-white">
+      <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700 pb-1 overflow-x-auto">
         {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 rounded-t-lg whitespace-nowrap text-sm transition ${
               activeTab === tab.key
-                ? 'bg-white text-brand-600 border-b-2 border-brand-600 font-medium'
-                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                ? 'bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 font-medium'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
             {tab.label}
@@ -44,7 +44,7 @@ export default function SettingsPage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
         {activeTab === 'subjects' && <SubjectsTab />}
         {activeTab === 'rooms' && <RoomsTab />}
         {activeTab === 'online_links' && <OnlineLinksTab />}

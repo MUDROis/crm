@@ -50,14 +50,14 @@ export default function Breadcrumbs() {
   }
 
   return (
-    <nav className="px-4 py-2 text-sm text-gray-500" aria-label="Breadcrumb">
+    <nav className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400" aria-label="Breadcrumb">
       {crumbs.map((crumb, i) => {
         const isLast = i === crumbs.length - 1
         return (
           <span key={crumb.href}>
-            {i > 0 && <span className="mx-2 text-gray-400">›</span>}
+            {i > 0 && <span className="mx-2 text-gray-400 dark:text-gray-500">›</span>}
             {isLast ? (
-              <span className="text-gray-900 font-medium">{crumb.label}</span>
+              <span className="text-gray-900 dark:text-white font-medium">{crumb.label}</span>
             ) : (
               <Link href={crumb.href} className="hover:text-brand-600 transition-colors">
                 {crumb.label}

@@ -3,7 +3,11 @@
 import { useState } from 'react'
 
 export default function AppearanceTab() {
-  const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'))
+  const [darkMode, setDarkMode] = useState(() => {
+    const stored = localStorage.getItem('theme')
+    if (stored) return stored === 'dark'
+    return document.documentElement.classList.contains('dark')
+  })
 
   const toggleDark = () => {
     const next = !darkMode

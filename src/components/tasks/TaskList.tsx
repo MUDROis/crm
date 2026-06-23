@@ -18,7 +18,8 @@ export default function TaskList({
   // Получаем userId для преподавателя
   useEffect(() => {
     if (role === 'teacher') {
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      supabase.auth.getSession().then((res: any) => {
+        const session = res.data?.session
         if (session?.user) setUserId(session.user.id)
       }).catch(() => {})
     } else {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import type { PostgrestSingleResponse } from '@supabase/supabase-js'
 
 const reportFields = [
   { key: 'show_attendance', label: 'Посещаемость' },
@@ -20,9 +21,10 @@ export default function ReportsTab() {
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.from('settings').select('*').eq('key', 'report_fields').then(({ data }) => {
-      if (data?.[0]?.value) {
-        setFields(data[0].value as Record<string, boolean>)
+    supabase.from('settings').select('*').eq('key', 'report_fields').then((res: PostgrestSingleResponse<unknown>) => {
+      const row = (res.data as Record<string, unknown>[] | null)?.[0]
+      if (row?.value) {
+        setFields(row.value as Record<string, boolean>)
       }
     })
   }, [])

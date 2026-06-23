@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import type { PostgrestSingleResponse } from '@supabase/supabase-js'
 
 const triggers = [
   { key: 'notify_new_student', label: 'Новый ученик' },
@@ -17,9 +18,10 @@ export default function TriggersTab() {
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.from('settings').select('*').eq('key', 'notification_triggers').then(({ data }) => {
-      if (data?.[0]?.value) {
-        setEnabled(data[0].value as Record<string, boolean>)
+    supabase.from('settings').select('*').eq('key', 'notification_triggers').then((res: PostgrestSingleResponse<unknown>) => {
+      const row = (res.data as Record<string, unknown>[] | null)?.[0]
+      if (row?.value) {
+        setEnabled(row.value as Record<string, boolean>)
       }
     })
   }, [])

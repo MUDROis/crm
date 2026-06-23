@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import type { PostgrestSingleResponse } from '@supabase/supabase-js'
 
 type ColumnDef = { key: string; label: string }
 
@@ -11,14 +12,16 @@ export type TableDef = {
   columns: ColumnDef[]
 }
 
+type Row = Record<string, unknown>
+
 export default function EditableTable({ tableDef }: { tableDef: TableDef }) {
-  const [rows, setRows] = useState<Record<string, string>[]>([])
+  const [rows, setRows] = useState<Row[]>([])
   const [newRow, setNewRow] = useState<Record<string, string>>({})
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.from(tableDef.name).select('*').order('id').then(({ data }) => {
-      if (data) setRows(data as Record<string, string>[])
+    supabase.from(tableDef.name).select('*').order('id').then((res: PostgrestSingleResponse<unknown>) => {
+      if (res.data) setRows(res.data as Row[])
     })
   }, [tableDef.name])
 
@@ -28,19 +31,19 @@ export default function EditableTable({ tableDef }: { tableDef: TableDef }) {
     await supabase.from(tableDef.name).insert(values)
     setNewRow({})
     const { data } = await supabase.from(tableDef.name).select('*').order('id')
-    if (data) setRows(data as Record<string, string>[])
+    if (data) setRows(data as Row[])
   }
 
-  const updateCell = async (id: number, key: string, value: string) => {
+  const updateCell = async (id: unknown, key: string, value: string) => {
     await supabase.from(tableDef.name).update({ [key]: value }).eq('id', id)
     setRows(prev => prev.map(r => r.id === id ? { ...r, [key]: value } : r))
   }
 
-  const deleteRow = async (id: number) => {
+  const deleteRow = async (id: unknown) => {
     if (!confirm('Удалить?')) return
     await supabase.from(tableDef.name).delete().eq('id', id)
     const { data } = await supabase.from(tableDef.name).select('*').order('id')
-    if (data) setRows(data as Record<string, string>[])
+    if (data) setRows(data as Row[])
   }
 
   return (
@@ -56,12 +59,12 @@ export default function EditableTable({ tableDef }: { tableDef: TableDef }) {
         </thead>
         <tbody>
           {rows.map(row => (
-            <tr key={row.id} className="border-b hover:bg-gray-50">
+            <tr key={String(row.id)} className="border-b hover:bg-gray-50">
               {tableDef.columns.map(c => (
                 <td key={c.key} className="p-1 border">
                   <input
                     type="text"
-                    defaultValue={row[c.key]}
+                    defaultValue={String(row[c.key] ?? '')}
                     onBlur={e => updateCell(row.id, c.key, e.target.value)}
                     className="w-full p-1 border-none bg-transparent focus:bg-white focus:ring-1 focus:ring-brand-500 rounded"
                   />
